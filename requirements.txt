@@ -1,3 +1,7 @@
+# python==3.9.16 (conda create -n emo_env python=3.9.16)
+# conda install -c "nvidia/label/cuda-11.8.0" cuda-toolkit
+# conda install -c anaconda cudnn
+# conda install pytorch torchvision torchaudio pytorch-cuda=11.8 -c pytorch -c nvidia
 datasets==2.14.4
 emotlib==1.0.1
 nltk==3.8.1
@@ -10,7 +14,6 @@ pytorch_lightning==1.4.8
 rich==13.5.2
 setuptools==68.0.0
 stanfordnlp==0.2.0
-torch==2.0.1+cu118
 torchmetrics==0.4.0
 tqdm==4.66.1
 transformers==4.31.0

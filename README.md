@@ -23,8 +23,10 @@ If Multi-EmoBERT is helpful for your research, please consider citing our paper:
 
 ## Basics
 ### Resources
-[Stanford CoreNLP](https://stanfordnlp.github.io/CoreNLP/download.html)
-[NRC Emotion Lexicon](https://saifmohammad.com/WebPages/NRC-Emotion-Lexicon.html)
+[Stanford CoreNLP](https://stanfordnlp.github.io/CoreNLP/download.html): note: Java is needed
+
+[NRC Emotion Lexicon](https://saifmohammad.com/WebPages/NRC-Emotion-Lexicon.htm): only use NRC-Emotion-Lexicon-Wordlevel-v0.92.txt and rename it as NRC-Emotion-Lexicon.txt
+
 [Spanish Hashtag Lexicon](https://www.cic.ipn.mx/~sidorov/#SEL)
 ### Neptune
 Before running the code, you need to complete the following steps:

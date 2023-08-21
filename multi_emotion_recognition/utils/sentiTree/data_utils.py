@@ -7,7 +7,7 @@ import os
 
 def nrc_hashtag_lexicon(resource_path):
     hashtag_lexicon = []
-    with open(os.path.join(resource_path, "NRC-Hashtag-Emotion-Lexicon-v0.2.txt"), 'r') as file:
+    with open(os.path.join(resource_path, "NRC-Emotion-Lexicon.txt"), 'r') as file:
         nrc_lexicon = file.readlines()
         for nl in nrc_lexicon:
             hashtag_lexicon.append(nl.split('\t')[1].replace("#", ""))

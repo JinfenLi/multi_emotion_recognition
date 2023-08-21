@@ -18,8 +18,7 @@ from nltk import TweetTokenizer
 from tqdm import tqdm
 from transformers import AutoTokenizer, AutoModel
 from stanfordnlp.server import CoreNLPClient
-from multi_emotion_recognition.utils.data import dataset_info, data_keys
-from multi_emotion_recognition.utils.sentiTree.data_utils import nrc_hashtag_lexicon, spanish_hashtag_lexicon, get_hashtag_inputs
+
 from dotenv import load_dotenv
 import os
 load_dotenv(override=True)
@@ -28,10 +27,10 @@ logger = logging.getLogger(__name__)
 
 import pyrootutils
 pyrootutils.setup_root(__file__, indicator=".project-root", pythonpath=True)
-
+from multi_emotion_recognition.utils.data import dataset_info, data_keys
+from multi_emotion_recognition.utils.sentiTree.data_utils import nrc_hashtag_lexicon, spanish_hashtag_lexicon, get_hashtag_inputs
 os.environ["CORENLP_HOME"] = os.environ.get("CORENLP_HOME")
-
-
+print(os.environ["CORENLP_HOME"])
 def set_random_seed(seed):
     random.seed(seed)
     np.random.seed(seed)

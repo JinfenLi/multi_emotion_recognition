@@ -155,4 +155,5 @@ configs/local/default.yaml
 .aim
 
 /resources/
-
+/save/
+/logs/

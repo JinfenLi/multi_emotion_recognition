@@ -2,13 +2,14 @@
 # conda install -c "nvidia/label/cuda-11.8.0" cuda-toolkit
 # conda install -c anaconda cudnn
 # conda install pytorch torchvision pytorch-cuda=11.8 -c pytorch -c nvidia
-# conda install -c bioconda java-jdk
+# conda install openjdk=8
 datasets==2.14.4
 emotlib==1.0.1
 nltk==3.8.1
 numpy==1.25.2
 omegaconf==2.1.2
 pandas==2.0.3
+protobuf=3.2.
 pyrootutils==1.0.4
 python-dotenv==1.0.0
 pytorch_lightning==1.4.8

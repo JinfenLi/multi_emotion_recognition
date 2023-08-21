@@ -5,6 +5,9 @@
 # conda install openjdk=8
 datasets==2.14.4
 emotlib==1.0.1
+hydra-core==1.1.0
+hydra-colorlog==1.1.0
+neptune-client==0.14.2
 nltk==3.8.1
 numpy==1.25.2
 omegaconf==2.1.2

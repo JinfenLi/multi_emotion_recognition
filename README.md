@@ -12,13 +12,12 @@ WebSci 2023
 If Multi-EmoBERT is helpful for your research, please consider citing our paper:
 
 ```
-@inproceedings{chan2022unirex,
-  title={Unirex: A unified learning framework for language model rationale extraction},
-  author={Chan, Aaron and Sanjabi, Maziar and Mathias, Lambert and Tan, Liang and Nie, Shaoliang and Peng, Xiaochang and Ren, Xiang and Firooz, Hamed},
-  booktitle={International Conference on Machine Learning},
-  pages={2867--2889},
-  year={2022},
-  organization={PMLR}
+@inproceedings{li2023multi,
+  title={Multi-emotion Recognition Using Multi-EmoBERT and Emotion Analysis in Fake News},
+  author={Li, Jinfen and Xiao, Lu},
+  booktitle={Proceedings of the 15th ACM Web Science Conference 2023},
+  pages={128--135},
+  year={2023}
 }
 ```
 

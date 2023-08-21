@@ -37,7 +37,7 @@ Before running the code, you need to complete the following steps:
 Do grid search over different configs.
 ```
 python main.py -m \
-    dataset=sst,stf \
+    dataset=se_english \
     seed=0,1,2,3,4,5 \
 ```
 
@@ -95,7 +95,7 @@ Hydra will change the working directory to the path specified in `configs/hydra/
 
 Here, we assume the following:
 - The `data_dir` is `data`, which means `data_dir=${work_dir}/../data`.
-- The dataset is `sst`.
+- The dataset is `semEval 2018 task 1-english`.
 
 ### 1. Build dataset
 The commands below are used to build pre-processed datasets, saved as pickle files. The model architecture is specified so that we can use the correct tokenizer for pre-processing.

@@ -1,0 +1,26 @@
+arch: bert-base-uncased
+dataset: se_english
+optimizer:
+  _target_: transformers.AdamW
+  lr: 1.0e-05
+  betas:
+  - 0.9
+  - 0.98
+  eps: 1.0e-08
+  weight_decay: 0.0
+  correct_bias: false
+num_classes: 11
+scheduler:
+  lr_scheduler: linear_with_warmup
+  warmup_updates: 0.1
+num_freeze_layers: 0
+freeze_epochs: -1
+neg_weight: 1
+save_outputs: false
+exp_id: null
+measure_attrs_runtime: false
+use_hashtag: true
+use_senti_tree: true
+use_emo_cor: true
+hashtag_emb_dim: 80
+phrase_emb_dim: 80

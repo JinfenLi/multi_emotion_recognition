@@ -23,16 +23,27 @@ If Multi-EmoBERT is helpful for your research, please consider citing our paper:
 
 ## Basics
 ### Resources
+create a folder named "resources" and put the following resources here
 [Stanford CoreNLP](https://stanfordnlp.github.io/CoreNLP/download.html)
 
 [NRC Emotion Lexicon v0.2](https://github.com/bwang482/emotionannotate/blob/master/lexicons/NRC-Hashtag-Emotion-Lexicon-v0.2.txt): we use NRC-Emotion-Lexicon-Wordlevel-v0.2.txt and rename it as NRC-Emotion-Lexicon.txt
 
 [Spanish Hashtag Lexicon](https://www.cic.ipn.mx/~sidorov/#SEL)
-### Neptune
-Before running the code, you need to complete the following steps:
-1. Create a [Neptune](https://neptune.ai/) account and project.
-2. Edit the [project name](https://github.com/aarzchan/UNIREX/blob/main/configs/logger/neptune.yaml#L12), [local username](https://github.com/aarzchan/UNIREX/blob/main/src/utils/logging.py#L11), and [Neptune API token](https://github.com/aarzchan/UNIREX/blob/main/src/utils/logging.py#L11) fields in the code.
 
+### Environment
+create a virtual environment 
+```
+conda create -n emo_env python=3.9.16
+```
+install packages via conda first and then via pip
+```
+conda install -c "nvidia/label/cuda-11.8.0" cuda-toolkit
+conda install -c anaconda cudnn
+conda install pytorch torchvision pytorch-cuda=11.8 -c pytorch -c nvidia
+conda install openjdk=8
+pip install -r requirements.txt
+```
+rename .env.example as .env and change the variable values in the file
 
 ### Multirun
 Do grid search over different configs.

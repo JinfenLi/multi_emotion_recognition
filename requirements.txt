@@ -1,0 +1,16 @@
+datasets==2.14.4
+emotlib==1.0.1
+nltk==3.8.1
+numpy==1.25.2
+omegaconf==2.1.2
+pandas==2.0.3
+pyrootutils==1.0.4
+python-dotenv==1.0.0
+pytorch_lightning==1.4.8
+rich==13.5.2
+setuptools==68.0.0
+stanfordnlp==0.2.0
+torch==2.0.1+cu118
+torchmetrics==0.4.0
+tqdm==4.66.1
+transformers==4.31.0

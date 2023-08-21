@@ -1,0 +1,19 @@
+# default use fixed-lm without expl
+defaults:
+    - _self_
+    - model: lm
+    - data: default
+    - logger: csv
+    - setup: a100
+    - paths: default.yaml
+    - hydra: default
+    - training: base
+    - trainer: defaults
+    - override /hydra/job_logging: colorlog
+    - override /hydra/hydra_logging: colorlog
+
+seed: 0
+debug: False
+save_checkpoint: True
+save_rand_checkpoint: False
+early_stopping: True

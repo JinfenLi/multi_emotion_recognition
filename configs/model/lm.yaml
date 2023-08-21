@@ -1,0 +1,25 @@
+_target_: multi_emotion_recognition.model.lm.MultiEmoModel
+
+defaults:
+  - optimizer: hf_adamw
+  - scheduler: linear_with_warmup
+
+
+arch: bert-base-uncased
+dataset: ${data.dataset}
+neg_weight: 1
+
+num_freeze_layers: 0
+freeze_epochs: -1
+
+save_outputs: ${training.save_outputs}
+exp_id: null
+
+measure_attrs_runtime: False
+
+use_hashtag: True
+use_senti_tree: True
+use_emo_cor: True
+
+hashtag_emb_dim: 80
+phrase_emb_dim: 80

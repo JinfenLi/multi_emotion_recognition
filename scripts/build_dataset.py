@@ -308,14 +308,6 @@ def main():
                 idx, dataset_dict, input_ids, hashtag_inputs, max_length, actual_max_length, tokenizer, label,
                 text, offset_mapping)
 
-            # dataset_dict['item_idx'].append(idx)
-            # dataset_dict['input_ids'].append(input_ids)
-            # dataset_dict['hashtag_ids'].append(hashtag_inputs)
-            # dataset_dict['attention_mask'].append(attention_mask)
-            # dataset_dict['label'].append([int(dataset[idx][x]) for x in dataset_info[args.dataset]['classes']])
-            # dataset_dict['offsets'].append(offset_mapping)
-            # dataset_dict['truncated_texts'].append(truncated_text)
-
         dataset_dict['tree'] = sentiment_tree(dataset_dict['truncated_texts'],
                                            args.num_samples if args.num_samples else num_examples,
                                            dataset_dict['offsets'],

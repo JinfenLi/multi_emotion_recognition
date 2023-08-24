@@ -67,7 +67,7 @@ def build(cfg) -> Tuple[pl.LightningDataModule, pl.LightningModule, pl.Trainer]:
     )
     dm.setup(splits=cfg.training.eval_splits.split(","))
 
-    offline_dir = f'{cfg.data.dataset}_{cfg.model.arch}_use-hashtag-{cfg.model.use_hashtag}_use-senti-tree-{cfg.model.use_senti_tree}_{time.strftime("%d_%m_%Y")}_{str(uuid.uuid4())[: 8]}'
+    offline_dir = f'{cfg.data.dataset}_hashtag-{cfg.model.use_hashtag}_senti-{cfg.model.use_senti_tree}_cor-{cfg.model.use_emo_cor}_{time.strftime("%d_%m_%Y")}_{str(uuid.uuid4())[: 8]}'
     logger.info(f'load {cfg.data.dataset} <{cfg.data._target_}>')
     config = None
     if cfg.training.evaluate_ckpt:
@@ -80,6 +80,7 @@ def build(cfg) -> Tuple[pl.LightningDataModule, pl.LightningModule, pl.Trainer]:
                                     config['model']['arch'],
                                     f"use_hashtag={config['model']['use_hashtag']}",
                                     f"use_senti_tree={config['model']['use_senti_tree']}",
+                                    f"use_emo_cor={config['model']['use_emo_cor']}",
                                     f"hashtag_emb_dim={config['model']['hashtag_emb_dim']}",
                                     f"phrase_emb_dim={config['model']['phrase_emb_dim']}"]
 
@@ -98,7 +99,7 @@ def build(cfg) -> Tuple[pl.LightningDataModule, pl.LightningModule, pl.Trainer]:
     with open_dict(cfg):
         if (not (cfg.debug or cfg.logger.offline)) and cfg.logger.logger == "neptune":
             cfg.paths.save_dir = os.path.join(cfg.paths.save_dir,
-                                              f'{cfg.data.dataset}_{cfg.model.arch}_use-hashtag-{cfg.model.use_hashtag}_use-senti-tree-{cfg.model.use_senti_tree}_{run_logger.experiment_id}')
+                                              f'{cfg.data.dataset}_hashtag-{cfg.model.use_hashtag}_senti-{cfg.model.use_senti_tree}_cor-{cfg.model.use_emo_cor}_{run_logger.experiment_id}')
         #     if cfg.logger.logger == 'csv':
         #
         #         cfg.logger.name = cfg.logger.exp_id = offline_dir

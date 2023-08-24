@@ -111,7 +111,7 @@ Here, we assume the following:
 
 ### 1. Build dataset
 The commands below are used to build pre-processed datasets, saved as pickle files. The model architecture is specified so that we can use the correct tokenizer for pre-processing.
-
+Remember to put a xxx.yaml file in the configs/dataset folder for the dataset you want to build. 
 ```
 python scripts/build_dataset.py --data_dir data \
     --dataset se_english --arch bert-base-uncased --split train
@@ -202,7 +202,8 @@ python main.py -m \
 ```
 
 ### 4. Evaluate Model
-exp_id is the folder name under your save_dir (e.g., "se_english_bert-base-uncased_use-hashtag-True_use-senti-tree-True_xxx"), ckpt_path is the checkpoint under the checkpoints folder in the exp_id folder
+exp_id is the folder name under your save_dir (e.g., "se_english_bert-base-uncased_use-hashtag-True_use-senti-tree-True_xxx"), ckpt_path is the checkpoint under the checkpoints folder in the exp_id folder.
+The results will be saved in the model_outputs folder in the exp_id folder.
 ```
 python main.py -m \
     data=se_english \
@@ -216,3 +217,6 @@ python main.py -m \
     setup.num_workers=3 \
     seed=0,1,2
 ```
+
+### 5. Predict Your Own Data
+The pip installable package is available soon ...

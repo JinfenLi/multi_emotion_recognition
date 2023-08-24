@@ -30,7 +30,7 @@ class MultiEmoModel(BaseModel):
                  save_outputs: bool = True, exp_id: str = None,
                  measure_attrs_runtime: bool = False,
                  use_hashtag: bool = True, use_senti_tree: bool = True, use_emo_cor: bool = True, hashtag_emb_dim: int = 0,
-                    phrase_emb_dim: int = 0,
+                    phrase_emb_dim: int = 0, senti_emb_dim: int = 0,
                  **kwargs):
 
         super().__init__()
@@ -51,6 +51,7 @@ class MultiEmoModel(BaseModel):
         self.use_emo_cor = use_emo_cor
         self.hashtag_emb_dim = hashtag_emb_dim
         self.phrase_emb_dim = phrase_emb_dim
+        self.senti_emb_dim = senti_emb_dim
 
 
         self.best_metrics = init_best_metrics()
@@ -72,11 +73,14 @@ class MultiEmoModel(BaseModel):
         if use_hashtag:
             task_head_input_size += self.hashtag_emb_dim
 
+        # sentiment for each phrase node
+        self.senti_encoder = nn.Embedding(5, self.senti_emb_dim) if (
+                    use_senti_tree) else None
         self.phrase_encoder = nn.Linear(self.task_encoder.config.hidden_size, self.phrase_emb_dim) if use_senti_tree else None
         self.phrase_head = nn.Linear(self.phrase_emb_dim, self.phrase_emb_dim) if use_senti_tree else None
         self.tok_attn = TokenAttention(self.phrase_emb_dim, 1, self.task_encoder.config.hidden_size) if use_senti_tree else None
         if use_senti_tree:
-            task_head_input_size += self.phrase_emb_dim
+            task_head_input_size += self.phrase_emb_dim + self.senti_emb_dim
 
         self.task_head = nn.Linear(
             task_head_input_size,
@@ -114,28 +118,51 @@ class MultiEmoModel(BaseModel):
         self.measure_attrs_runtime = measure_attrs_runtime
 
 
-    def generate_phrase_embs(self, hidden_states, phrase_ids):
+    def generate_phrase_embs(self, hidden_states, phrase_ids, sentiment_ids):
+        senti_enc = self.senti_encoder(sentiment_ids)
         enc = self.phrase_encoder(hidden_states)
         # enc = torch.mean(enc, dim=1)
         enc = self.phrase_head(enc)
-        total_enc = []
-        for pid in phrase_ids:
-            if pid[1] == 0:
-                senti_encs = enc[:, 0].unsqueeze(1)
-                word_encs = hidden_states[:, 0].unsqueeze(1)
-            else:
-                senti_encs = enc[:, pid[0]: pid[1]]
-                word_encs = hidden_states[:, pid[0]: pid[1]]
-            senti_encs = self.tok_attn(word_encs, senti_encs)
-            total_enc.append(senti_encs)
+        total_encs = []
+
+        for i, cur_pids in enumerate(phrase_ids):
+            total_enc = []
+            for j, pid in enumerate(cur_pids):
+                if pid[1] == 0:
+                    phrase_encs = enc[i, 0].unsqueeze(0).unsqueeze(0)
+                    # get neutral sentiment
+                    senti_encs = self.senti_encoder.weight[2].unsqueeze(0)
+                    word_encs = hidden_states[i, 0].unsqueeze(0).unsqueeze(0)
+                    # print("here")
+                    # print(phrase_encs.shape)
+                    # print(senti_encs.shape)
+                else:
+                    phrase_encs = enc[i, pid[0]: pid[1]].unsqueeze(0)
+                    senti_encs = senti_enc[i, j].unsqueeze(0)
+                    word_encs = hidden_states[i, pid[0]: pid[1]].unsqueeze(0)
+                    # print(phrase_encs.shape)
+                    # print(senti_encs.shape)
+                    # print(pid[1])
+
+                cur_phrase_encs = self.tok_attn(word_encs, phrase_encs)
+                total_enc.append(torch.cat([cur_phrase_encs, senti_encs], dim=1))
+            cur_total_enc = torch.stack(total_enc).mean(dim=0)
+            total_encs.append(cur_total_enc)
         # take the average of total_enc
-        total_enc = torch.stack(total_enc).mean(dim=0)
-        return total_enc
+        total_encs = torch.stack(total_encs).squeeze(1)
+        return total_encs
 
 
-    def forward(self, inputs, attention_mask, hashtag_inputs, phrase_inputs):
+    def forward(self, inputs, attention_mask, hashtag_inputs, phrase_inputs, sentiment_ids):
 
-
+        # get the maxiumn id of hashtag input
+        if hashtag_inputs is not None:
+            max_hashtag_id = hashtag_inputs.max()
+            # print('max hashtag id is {}'.format(max_hashtag_id))
+            # # get the shape of hashtag_encoder
+            # print('hashtag encoder shape is {}'.format(self.hashtag_encoder.weight.shape))
+            if max_hashtag_id > English_Hashtag_Voc_Size:
+                raise ValueError('hashtag id is larger than the size of hashtag embedding')
         enc = self.task_encoder(input_ids=inputs, attention_mask=attention_mask)
         task_head_inputs = enc.pooler_output
         if hashtag_inputs is not None:
@@ -143,7 +170,7 @@ class MultiEmoModel(BaseModel):
             hashtag_enc = torch.mean(hashtag_enc, dim=1)
             task_head_inputs = torch.cat([task_head_inputs, hashtag_enc], dim=1)
         if phrase_inputs is not None:
-            phrase_enc = self.generate_phrase_embs(enc.last_hidden_state, phrase_inputs)
+            phrase_enc = self.generate_phrase_embs(enc.last_hidden_state, phrase_inputs, sentiment_ids)
             task_head_inputs = torch.cat([task_head_inputs, phrase_enc], dim=1)
 
         logits = self.task_head(task_head_inputs)
@@ -167,7 +194,7 @@ class MultiEmoModel(BaseModel):
 
         ret_dict, loss_dict, metric_dict = {}, {}, {}
 
-        logits = self.forward(input_ids, attn_mask, hashtag_ids, phrase_ids)
+        logits = self.forward(input_ids, attn_mask, hashtag_ids, phrase_ids, sentiment_ids)
         loss = calc_task_loss(logits, targets)
 
         loss_dict['loss'] = loss

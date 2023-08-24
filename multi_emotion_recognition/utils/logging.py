@@ -104,7 +104,10 @@ def log_epoch_losses(model_class, outputs, split):
     log_data_to_neptune(model_class, loss, 'total', 'loss', 'epoch', split, ret_dict=None)
 
 def log_epoch_metrics(model_class, outputs, split):
-
+    logits = torch.cat([x['logits'] for x in outputs])
+    targets = torch.cat([x['targets'] for x in outputs])
+    preds = calc_preds(logits)
+    get_step_metrics(preds, targets, model_class.perf_metrics)
     perf_metrics = get_epoch_metrics(model_class.perf_metrics)
 
     log_data_to_neptune(model_class, perf_metrics['acc'], 'acc', 'metric', 'epoch', split, ret_dict=None)

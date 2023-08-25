@@ -17,8 +17,8 @@ def init_perf_metrics(num_classes):
         task: Literal["binary"] = "binary"
     perf_metrics = torch.nn.ModuleDict({
         'acc': torchmetrics.Accuracy( num_classes=num_classes),
-        'macro_f1': torchmetrics.F1(num_classes=num_classes, average='macro'),
-        'micro_f1': torchmetrics.F1(num_classes=num_classes, average='micro'),
+        'macro_f1': torchmetrics.F1(num_classes=num_classes, average='macro', mdmc_average="global"),
+        'micro_f1': torchmetrics.F1(num_classes=num_classes, average='micro', mdmc_average="global"),
     })
 
     assert num_classes >= 2

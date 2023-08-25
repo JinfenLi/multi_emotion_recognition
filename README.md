@@ -23,14 +23,27 @@ If Multi-EmoBERT is helpful for your research, please consider citing our paper:
 
 ## Basics
 ### Resources
+create a folder named "resources" and put the following resources here
 [Stanford CoreNLP](https://stanfordnlp.github.io/CoreNLP/download.html)
-[NRC Emotion Lexicon](https://saifmohammad.com/WebPages/NRC-Emotion-Lexicon.html)
-[Spanish Hashtag Lexicon](https://www.cic.ipn.mx/~sidorov/#SEL)
-### Neptune
-Before running the code, you need to complete the following steps:
-1. Create a [Neptune](https://neptune.ai/) account and project.
-2. Edit the [project name](https://github.com/aarzchan/UNIREX/blob/main/configs/logger/neptune.yaml#L12), [local username](https://github.com/aarzchan/UNIREX/blob/main/src/utils/logging.py#L11), and [Neptune API token](https://github.com/aarzchan/UNIREX/blob/main/src/utils/logging.py#L11) fields in the code.
 
+[NRC Emotion Lexicon v0.2](https://github.com/bwang482/emotionannotate/blob/master/lexicons/NRC-Hashtag-Emotion-Lexicon-v0.2.txt): we use NRC-Emotion-Lexicon-Wordlevel-v0.2.txt and rename it as NRC-Emotion-Lexicon.txt
+
+[Spanish Hashtag Lexicon](https://www.cic.ipn.mx/~sidorov/#SEL)
+
+### Environment
+create a virtual environment 
+```
+conda create -n emo_env python=3.9.16
+```
+install packages via conda first and then via pip
+```
+conda install -c "nvidia/label/cuda-11.8.0" cuda-toolkit
+conda install -c anaconda cudnn
+conda install pytorch torchvision pytorch-cuda=11.8 -c pytorch -c nvidia
+conda install openjdk=8
+pip install -r requirements.txt
+```
+rename .env.example as .env and change the variable values in the file
 
 ### Multirun
 Do grid search over different configs.
@@ -98,7 +111,7 @@ Here, we assume the following:
 
 ### 1. Build dataset
 The commands below are used to build pre-processed datasets, saved as pickle files. The model architecture is specified so that we can use the correct tokenizer for pre-processing.
-
+Remember to put a xxx.yaml file in the configs/dataset folder for the dataset you want to build. 
 ```
 python scripts/build_dataset.py --data_dir data \
     --dataset se_english --arch bert-base-uncased --split train
@@ -189,7 +202,8 @@ python main.py -m \
 ```
 
 ### 4. Evaluate Model
-exp_id is the folder name under your save_dir (e.g., "se_english_bert-base-uncased_use-hashtag-True_use-senti-tree-True_xxx"), ckpt_path is the checkpoint under the checkpoints folder in the exp_id folder
+exp_id is the folder name under your save_dir (e.g., "se_english_bert-base-uncased_use-hashtag-True_use-senti-tree-True_xxx"), ckpt_path is the checkpoint under the checkpoints folder in the exp_id folder.
+The results will be saved in the model_outputs folder in the exp_id folder.
 ```
 python main.py -m \
     data=se_english \
@@ -203,3 +217,6 @@ python main.py -m \
     setup.num_workers=3 \
     seed=0,1,2
 ```
+
+### 5. Predict Your Own Data
+The pip installable package is available soon ...

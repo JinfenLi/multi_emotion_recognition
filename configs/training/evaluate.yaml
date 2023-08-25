@@ -2,8 +2,8 @@ evaluate_ckpt: True
 finetune_ckpt: False
 save_outputs: True
 # must provide one
-ckpt_path: epoch=0-step=9.ckpt
+ckpt_path: xxx.ckpt
 eval_splits: 'test'   # comma separated (no space). E.g., train,dev,test
 train_shuffle: False
-exp_id: se_english_bert-base-uncased_use-hashtag-True_use-senti-tree-True_20_08_2023_6a6ea697
+exp_id: se_english_hashtag-False_senti-False_cor-False_xxx
 patience: null

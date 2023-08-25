@@ -154,5 +154,11 @@ configs/local/default.yaml
 # Aim logging
 .aim
 
+
 /resources/
 
+!save/
+save/*
+/logs/
+!save/best_model/checkpoints
+!save/best_model/hydra

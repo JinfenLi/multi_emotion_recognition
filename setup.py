@@ -5,7 +5,7 @@ from setuptools import find_packages, setup
 
 with open("README.md") as f:
     long_description = f.read()
-with open(os.path.join("multi_emotion_recognition", "version.txt")) as f:
+with open(os.path.join("src", "version.txt")) as f:
     version = f.read().strip()
 
 setup(
@@ -23,13 +23,14 @@ setup(
         "License :: OSI Approved :: Apache Software License",
     ],
     url="https://github.com/JinfenLi/multi_emotion_recognition",
+    license="MIT",
     install_requires=["pytorch-lightning", "hydra-core"],
-    packages=find_packages(),
+    package_dir={"": "src"},
+    packages=find_packages(where="src"),
     # use this to customize global commands available in the terminal after installing the package
     entry_points={
         "console_scripts": [
-            "train_command = multi_emotion_recognition.train:main",
-            "eval_command = multi_emotion_recognition.eval:main",
+            "command = main",
         ]
     },
 )

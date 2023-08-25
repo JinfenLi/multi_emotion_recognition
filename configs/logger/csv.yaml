@@ -1,5 +1,5 @@
 # csv logger built in lightning
-_target_: multi_emotion_recognition.utils.logging.get_csv_logger
+_target_: src.utils.logging.get_csv_logger
 
 logger: csv
 save_dir: "${paths.save_dir}"

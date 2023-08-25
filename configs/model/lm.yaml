@@ -1,4 +1,4 @@
-_target_: multi_emotion_recognition.model.lm.MultiEmoModel
+_target_: src.model.lm.MultiEmoModel
 
 defaults:
   - optimizer: hf_adamw
@@ -17,9 +17,11 @@ exp_id: null
 
 measure_attrs_runtime: False
 
-use_hashtag: True
-use_senti_tree: True
-use_emo_cor: True
+use_hashtag: False
+use_senti_tree: False
+use_emo_cor: False
 
 hashtag_emb_dim: 80
 phrase_emb_dim: 80
+senti_emb_dim: 10
+phrase_num: 20

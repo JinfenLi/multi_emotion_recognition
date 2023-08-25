@@ -3,7 +3,7 @@
     :url: https://github.com/JinfenLi
 """
 import os
-from multi_emotion_recognition.utils.data import dataset_info
+from src.utils.data import dataset_info
 import pandas as pd
 
 

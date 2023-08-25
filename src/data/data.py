@@ -14,7 +14,7 @@ import torch
 from torch.utils.data import DataLoader, Dataset
 from tqdm import tqdm
 from torch.nn.utils.rnn import pad_sequence
-from multi_emotion_recognition.utils.data import dataset_info, data_keys
+from src.utils.data import dataset_info, data_keys
 
 
 class DataModule(pl.LightningDataModule):
@@ -154,8 +154,8 @@ class TextClassificationDataset(Dataset):
             'input_ids': torch.stack([x[1] for x in items], dim=0),
             'attention_mask': torch.stack([x[2] for x in items], dim=0),
             'hashtag_ids': torch.stack([x[3] for x in items], dim=0) if self.use_hashtag else None,
-            'phrase_span_ids': torch.cat([x[4] for x in items]) if self.use_senti_tree else None,
-            'sentiment_ids': torch.cat([x[5] for x in items]) if self.use_senti_tree else None,
+            'phrase_span_ids': torch.stack([x[4] for x in items]) if self.use_senti_tree else None,
+            'sentiment_ids': torch.stack([x[5] for x in items]) if self.use_senti_tree else None,
             'label': torch.cat([x[6] for x in items]),
             'split': self.split, # when evaluate_ckpt=true, split always equals to test
         }

@@ -160,5 +160,5 @@ configs/local/default.yaml
 !save/
 save/**/*
 /logs/
-!save/best_model/checkpoints/
+!save/best_model/checkpoints/epoch=7-step=215.ckpt
 !save/best_model/hydra/

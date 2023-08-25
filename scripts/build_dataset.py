@@ -8,7 +8,7 @@ import re
 
 import datasets
 from collections import defaultdict as ddict, Counter
-
+import socket, subprocess
 import emotlib
 import nltk
 import numpy as np
@@ -27,8 +27,8 @@ logger = logging.getLogger(__name__)
 
 import pyrootutils
 pyrootutils.setup_root(__file__, indicator=".project-root", pythonpath=True)
-from multi_emotion_recognition.utils.data import dataset_info, data_keys
-from multi_emotion_recognition.utils.sentiTree.data_utils import nrc_hashtag_lexicon, spanish_hashtag_lexicon, get_hashtag_inputs
+from src.utils.data import dataset_info, data_keys
+from src.utils.sentiTree.data_utils import nrc_hashtag_lexicon, spanish_hashtag_lexicon, get_hashtag_inputs, get_CoreNLPClient, annotate_text
 os.environ["CORENLP_HOME"] = os.environ.get("CORENLP_HOME")
 print(os.environ["CORENLP_HOME"])
 def set_random_seed(seed):
@@ -164,31 +164,32 @@ def parse_senti_tree(senti_tree_str, tid=0):
 
 def sentiment_tree(texts, num_examples, original_offsets, max_length):
     sents_with_tokens_list = []
+    available_port = get_CoreNLPClient(args.resource_dir)
+    # with CoreNLPClient(be_quiet=False, annotators=['tokenize', 'sentiment'], properties={'tokenize.codepoint': 'true'}, timeout=60000,
+    #                    memory='16G', output_format='json') as client:
 
-    with CoreNLPClient(be_quiet=False, annotators=['tokenize', 'sentiment'], properties={'tokenize.codepoint': 'true'}, timeout=60000,
-                       memory='16G', output_format='json') as client:
+    for idx in tqdm(range(num_examples), desc=f'Building {args.split} dataset'):
+        new_senti_dict = ddict(list)
+        text = texts[idx]
+        original_offset = original_offsets[idx]
+        # ann = client.annotate(text.strip())
+        ann = annotate_text(text.strip(), available_port)
+        cur_start_tid = 0
+        result_dict = ddict(list)
+        new_token_dict, phrase_dict = {}, {}
+        cur_start_ref_tid = 1
+        for sent_dict in ann['sentences']:
 
-        for idx in tqdm(range(num_examples), desc=f'Building {args.split} dataset'):
-            new_senti_dict = ddict(list)
-            text = texts[idx]
-            original_offset = original_offsets[idx]
-            ann = client.annotate(text.strip())
-            cur_start_tid = 0
-            result_dict = ddict(list)
-            new_token_dict, phrase_dict = {}, {}
-            cur_start_ref_tid = 1
-            for sent_dict in ann['sentences']:
-
-                sent_dict['offset'] = [(x['codepointOffsetBegin'], x['codepointOffsetEnd']) for x in sent_dict['tokens']]
-                # original_token_idx = [x['index'] for x in sent_dict['tokens']]
-                remap_token_dict, cur_start_ref_tid = remap_token_id(original_offset, sent_dict['offset'], cur_start_ref_tid)
-                new_token_dict.update({k + cur_start_tid: v for k, v in remap_token_dict.items()})
-                phrase_dict = parse_senti_tree(sent_dict['sentimentTree'], cur_start_tid)
-                phrase_dict['tokens'] = [[new_token_dict[x[0]][0], new_token_dict[x[1]][1]] for x in phrase_dict['tokens']]
-                result_dict['spans'].extend(phrase_dict['tokens'])
-                result_dict['sentiment'].extend(phrase_dict['sentiment'])
-                cur_start_tid = max(new_token_dict.keys()) + 1
-            sents_with_tokens_list.append(result_dict)
+            sent_dict['offset'] = [(x['characterOffsetBegin'], x['characterOffsetEnd']) for x in sent_dict['tokens']]
+            # original_token_idx = [x['index'] for x in sent_dict['tokens']]
+            remap_token_dict, cur_start_ref_tid = remap_token_id(original_offset, sent_dict['offset'], cur_start_ref_tid)
+            new_token_dict.update({k + cur_start_tid: v for k, v in remap_token_dict.items()})
+            phrase_dict = parse_senti_tree(sent_dict['sentimentTree'], cur_start_tid)
+            phrase_dict['tokens'] = [[new_token_dict[x[0]][0], new_token_dict[x[1]][1]] for x in phrase_dict['tokens']]
+            result_dict['spans'].extend(phrase_dict['tokens'])
+            result_dict['sentiment'].extend(phrase_dict['sentiment'])
+            cur_start_tid = max(new_token_dict.keys()) + 1
+        sents_with_tokens_list.append(result_dict)
 
 
     return sents_with_tokens_list
@@ -245,6 +246,7 @@ def update_dataset_dict(
     dataset_dict['truncated_texts'].append(text[: truncated_pos])
 
     return dataset_dict, actual_max_length
+
 
 def main():
 
@@ -327,9 +329,9 @@ if __name__ == "__main__":
                         choices=['se_english', 'se_arabic', 'se_spanish'])
     parser.add_argument('--arch', type=str, default='bert-base-uncased',
                         choices=['google/bigbird-roberta-base', 'bert-base-uncased'])
-    parser.add_argument('--split', type=str, default='test', help='Dataset split', choices=['train', 'dev', 'test'])
+    parser.add_argument('--split', type=str, default='train', help='Dataset split', choices=['train', 'dev', 'test'])
     parser.add_argument('--stratified_sampling', type=bool, default=False, help='Whether to use stratified sampling')
-    parser.add_argument('--num_samples', type=int, default=10,
+    parser.add_argument('--num_samples', type=int, default=None,
                         help='Number of examples to sample. None means all available examples are used.')
 
     parser.add_argument('--seed', type=int, default=0, help='Random seed')

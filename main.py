@@ -11,8 +11,8 @@ pyrootutils.setup_root(__file__, indicator=".project-root", pythonpath=True)
 @hydra.main(config_path="configs", config_name="config")
 def main(cfg: DictConfig):
     # import here for faster auto completion
-    from multi_emotion_recognition.utils.conf import touch
-    from multi_emotion_recognition.run import run
+    from src.utils.conf import touch
+    from src.run import run
 
     # additional set field by condition
     # assert no missing etc

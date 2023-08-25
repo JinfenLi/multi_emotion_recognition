@@ -1,5 +1,5 @@
 # https://neptune.ai
-_target_: multi_emotion_recognition.utils.logging.get_neptune_logger
+_target_: src.utils.logging.get_neptune_logger
 
 logger: neptune
 
@@ -11,6 +11,7 @@ tag_attrs:
   - "use_senti_tree=${model.use_senti_tree}"
   - "hashtag_emb_dim=${model.hashtag_emb_dim}"
   - "phrase_emb_dim=${model.phrase_emb_dim}"
+  - "phrase_num=${model.phrase_num}"
 
 api_key: ${oc.env:NEPTUNE_API_TOKEN} # api key is loaded from environment variable
 project_name: ${oc.env:NEPTUNE_NAME}

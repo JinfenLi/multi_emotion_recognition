@@ -18,9 +18,9 @@ from pytorch_lightning.callbacks import (
 )
 from transformers import AutoTokenizer
 
-from multi_emotion_recognition.utils.data import dataset_info, monitor_dict
-from multi_emotion_recognition.utils.logging import get_logger
-from multi_emotion_recognition.utils.callbacks import BestPerformance
+from src.utils.data import dataset_info, monitor_dict
+from src.utils.logging import get_logger
+from src.utils.callbacks import BestPerformance
 
 def get_callbacks(cfg: DictConfig):
 
@@ -59,37 +59,65 @@ def get_callbacks(cfg: DictConfig):
 
 logger = get_logger(__name__)
 
+def restore_config_params(config: DictConfig, cfg: DictConfig):
+    cfg.model.arch = config['model']['arch']
+    cfg.model.num_freeze_layers = config['model']['num_freeze_layers']
+    cfg.model.use_hashtag = config['model']['use_hashtag']
+    cfg.model.use_senti_tree = config['model']['use_senti_tree']
+    cfg.model.use_emo_cor = config['model']['use_emo_cor']
+    cfg.model.hashtag_emb_dim = config['model']['hashtag_emb_dim']
+    cfg.model.phrase_emb_dim = config['model']['phrase_emb_dim']
+    cfg.model.senti_emb_dim = config['model']['senti_emb_dim']
+    cfg.model.phrase_num = config['model']['phrase_num']
+
+    cfg.data.use_hashtag = config['model']['use_hashtag']
+    cfg.data.use_senti_tree = config['model']['use_senti_tree']
+    cfg.data.phrase_num = config['model']['phrase_num']
+
+    if cfg.logger.logger == 'neptune':
+        cfg.logger.tag_attrs = [cfg.data.dataset,
+                                config['model']['arch'],
+                                f"use_hashtag={config['model']['use_hashtag']}",
+                                f"use_senti_tree={config['model']['use_senti_tree']}",
+                                f"use_emo_cor={config['model']['use_emo_cor']}",
+                                f"hashtag_emb_dim={config['model']['hashtag_emb_dim']}",
+                                f"phrase_emb_dim={config['model']['phrase_emb_dim']}",
+                                f"phrase_num={config['model']['phrase_num']}"]
+
+
+    logger.info('Restored params from model config.')
+
+    return cfg
 
 def build(cfg) -> Tuple[pl.LightningDataModule, pl.LightningModule, pl.Trainer]:
+
+    offline_dir = f'{cfg.data.dataset}_hashtag-{cfg.model.use_hashtag}_senti-{cfg.model.use_senti_tree}_cor-{cfg.model.use_emo_cor}_{time.strftime("%d_%m_%Y")}_{str(uuid.uuid4())[: 8]}'
+    config = None
+    if cfg.training.evaluate_ckpt:
+        cfg.paths.save_dir = os.path.join(cfg.paths.save_dir, cfg.training.exp_id)
+        cfg.model.exp_id = cfg.training.exp_id
+        with open(os.path.join(cfg.paths.save_dir, 'hydra', 'config.yaml'), 'r') as f:
+            config = yaml.safe_load(f)
+
+        restore_config_params(config, cfg)
+
+        if cfg.logger.logger == "csv":
+            eval_dir = os.path.join(cfg.paths.save_dir, 'eval_outputs', cfg.data.dataset)
+            os.makedirs(eval_dir, exist_ok=True)
+            cfg.logger.name = eval_dir
+        # cfg.logger.exp_id = cfg.paths.save_dir
+    else:
+        if cfg.logger.logger == "csv":
+            cfg.paths.save_dir = cfg.logger.name = os.path.join(cfg.paths.save_dir, offline_dir)
+
     dm = instantiate(
         cfg.data,
         train_shuffle=cfg.training.train_shuffle,
     )
     dm.setup(splits=cfg.training.eval_splits.split(","))
 
-    offline_dir = f'{cfg.data.dataset}_hashtag-{cfg.model.use_hashtag}_senti-{cfg.model.use_senti_tree}_cor-{cfg.model.use_emo_cor}_{time.strftime("%d_%m_%Y")}_{str(uuid.uuid4())[: 8]}'
     logger.info(f'load {cfg.data.dataset} <{cfg.data._target_}>')
-    config = None
-    if cfg.training.evaluate_ckpt:
-        cfg.paths.save_dir = os.path.join(cfg.paths.save_dir, cfg.training.exp_id)
-        cfg.model.exp_id = cfg.training.exp_id
-        if cfg.logger.logger == "neptune":
-            with open(os.path.join(cfg.paths.save_dir, 'hydra', 'config.yaml'), 'r') as f:
-                config = yaml.safe_load(f)
-            cfg.logger.tag_attrs = [cfg.data.dataset,
-                                    config['model']['arch'],
-                                    f"use_hashtag={config['model']['use_hashtag']}",
-                                    f"use_senti_tree={config['model']['use_senti_tree']}",
-                                    f"use_emo_cor={config['model']['use_emo_cor']}",
-                                    f"hashtag_emb_dim={config['model']['hashtag_emb_dim']}",
-                                    f"phrase_emb_dim={config['model']['phrase_emb_dim']}"]
 
-        if cfg.logger.logger == "csv":
-            cfg.logger.name = cfg.paths.save_dir
-        # cfg.logger.exp_id = cfg.paths.save_dir
-    else:
-        if cfg.logger.logger == "csv":
-            cfg.paths.save_dir = cfg.logger.name = os.path.join(cfg.paths.save_dir, offline_dir)
 
 
         # cfg.trainer.gpus = 1
@@ -100,18 +128,9 @@ def build(cfg) -> Tuple[pl.LightningDataModule, pl.LightningModule, pl.Trainer]:
         if (not (cfg.debug or cfg.logger.offline)) and cfg.logger.logger == "neptune":
             cfg.paths.save_dir = os.path.join(cfg.paths.save_dir,
                                               f'{cfg.data.dataset}_hashtag-{cfg.model.use_hashtag}_senti-{cfg.model.use_senti_tree}_cor-{cfg.model.use_emo_cor}_{run_logger.experiment_id}')
-        #     if cfg.logger.logger == 'csv':
-        #
-        #         cfg.logger.name = cfg.logger.exp_id = offline_dir
-        # else:
-        #     save_dir = f'{cfg.data.dataset}_{cfg.model.arch}_use-hashtag-{cfg.model.use_hashtag}_use-senti-tree-{cfg.model.use_senti_tree}_{run_logger.experiment_id}'
-        #     if cfg.logger.logger == "neptune":
-        #         cfg.logger.exp_id = save_dir
-        #     else:
-        #         raise NotImplementedError
+
     if not cfg.training.evaluate_ckpt:
-        # cfg.paths.save_dir = os.path.join(cfg.paths.save_dir,
-        #                                   cfg.logger.exp_id)
+
         os.makedirs(cfg.paths.save_dir, exist_ok=True)
         # copy hydra configs
         shutil.copytree(

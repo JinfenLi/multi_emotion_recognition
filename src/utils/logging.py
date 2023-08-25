@@ -5,7 +5,7 @@ import torch
 from omegaconf.dictconfig import DictConfig
 from omegaconf.omegaconf import OmegaConf
 from pytorch_lightning.loggers import NeptuneLogger, CSVLogger
-from multi_emotion_recognition.utils.metrics import calc_preds, get_step_metrics, get_epoch_metrics
+from src.utils.metrics import calc_preds, get_step_metrics, get_epoch_metrics
 from dotenv import load_dotenv
 
 load_dotenv(override=True)

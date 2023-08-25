@@ -14,7 +14,7 @@ import torch
 from torch.utils.data import DataLoader, Dataset
 from tqdm import tqdm
 from torch.nn.utils.rnn import pad_sequence
-from multi_emotion_recognition.utils.data import dataset_info, data_keys
+from src.utils.data import dataset_info, data_keys
 
 
 class DataModule(pl.LightningDataModule):

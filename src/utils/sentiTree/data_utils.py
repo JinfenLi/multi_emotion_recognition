@@ -3,6 +3,10 @@
     :url: https://github.com/JinfenLi
 """
 import os
+import socket
+import subprocess
+
+import requests
 
 
 def nrc_hashtag_lexicon(resource_path):
@@ -53,3 +57,46 @@ def get_hashtag_inputs(tokens, hashtag_dict):
     return hashtag_inputs
 
 
+def get_CoreNLPClient(resource_dir):
+    def find_available_port(start_port, max_attempts=10):
+        for port in range(start_port, start_port + max_attempts):
+            try:
+                with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                    s.bind(("127.0.0.1", port))
+                return port
+            except OSError:
+                pass
+        return None
+
+    available_port = find_available_port(start_port=9000)
+
+    if available_port:
+        print("Available port for CoreNLPClient:", available_port)
+    else:
+        print("No available port  for CoreNLPClient found")
+    # Define the command to start the CoreNLP server
+    corenlp_command = [
+        "java", "-mx16g", "-cp", f"{resource_dir}/stanford-corenlp-4.5.4/*",
+        "edu.stanford.nlp.pipeline.StanfordCoreNLPServer",
+        "-port", f"{available_port}", "-timeout", "60000", "-threads", "4", "-maxCharLength", "100000", "-quiet",
+        "True",
+        "-annotators", "tokenize,sentiment",
+        "properties", "{'tokenize.codepoint': 'true'}"
+    ]
+
+    # Start the CoreNLP server
+    subprocess.Popen(corenlp_command)
+    return available_port
+
+def annotate_text(text, available_port):
+
+    corenlp_url = f"http://localhost:{available_port}"
+    properties = {
+        "annotators": "parse,sentiment",
+        "properties": "{'tokenize.codepoint': 'true'}",
+        "outputFormat": "json"
+    }
+
+    response = requests.post(f"{corenlp_url}/?properties={properties}", data=text.encode("utf-8"))
+    json_response = response.json()
+    return json_response

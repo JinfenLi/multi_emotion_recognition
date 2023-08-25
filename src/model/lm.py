@@ -12,15 +12,15 @@ from omegaconf import DictConfig
 
 from transformers import AutoModel, AutoTokenizer
 
-from multi_emotion_recognition.model.base_model import BaseModel
-from multi_emotion_recognition.model.attention import TokenAttention
-from multi_emotion_recognition.utils.data import dataset_info, English_Hashtag_Voc_Size, Spanish_Hashtag_Voc_Size
-from multi_emotion_recognition.utils.losses import calc_task_loss
-from multi_emotion_recognition.utils.metrics import init_best_metrics, init_perf_metrics, calc_preds
+from src.model.base_model import BaseModel
+from src.model.attention import TokenAttention
+from src.utils.data import dataset_info, English_Hashtag_Voc_Size, Spanish_Hashtag_Voc_Size
+from src.utils.losses import calc_task_loss
+from src.utils.metrics import init_best_metrics, init_perf_metrics, calc_preds
 
-from multi_emotion_recognition.utils.optim import setup_optimizer_params, setup_scheduler, freeze_layers
-from multi_emotion_recognition.utils.logging import log_step_losses, log_epoch_losses, log_epoch_metrics
-from multi_emotion_recognition.utils.utils import generate_output_file
+from src.utils.optim import setup_optimizer_params, setup_scheduler, freeze_layers
+from src.utils.logging import log_step_losses, log_epoch_losses, log_epoch_metrics
+from src.utils.utils import generate_output_file
 
 
 class MultiEmoModel(BaseModel):
@@ -155,14 +155,6 @@ class MultiEmoModel(BaseModel):
 
     def forward(self, inputs, attention_mask, hashtag_inputs, phrase_inputs, sentiment_ids):
 
-        # get the maxiumn id of hashtag input
-        if hashtag_inputs is not None:
-            max_hashtag_id = hashtag_inputs.max()
-            # print('max hashtag id is {}'.format(max_hashtag_id))
-            # # get the shape of hashtag_encoder
-            # print('hashtag encoder shape is {}'.format(self.hashtag_encoder.weight.shape))
-            if max_hashtag_id > English_Hashtag_Voc_Size:
-                raise ValueError('hashtag id is larger than the size of hashtag embedding')
         enc = self.task_encoder(input_ids=inputs, attention_mask=attention_mask)
         task_head_inputs = enc.pooler_output
         if hashtag_inputs is not None:

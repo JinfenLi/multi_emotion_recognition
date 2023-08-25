@@ -158,7 +158,7 @@ configs/local/default.yaml
 /resources/
 
 !save/
-save/*
+save/**/*
 /logs/
 !save/best_model/checkpoints/
 !save/best_model/hydra/

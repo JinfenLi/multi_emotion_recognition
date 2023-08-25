@@ -1,0 +1,9 @@
+evaluate_ckpt: True
+finetune_ckpt: False
+save_outputs: True
+# must provide one
+ckpt_path: xxx.ckpt
+eval_splits: 'test'   # comma separated (no space). E.g., train,dev,test
+train_shuffle: False
+exp_id: se_english_hashtag-False_senti-False_cor-False_xxx
+patience: null

@@ -1,0 +1,18 @@
+# https://neptune.ai
+_target_: src.utils.logging.get_neptune_logger
+
+logger: neptune
+
+log_db: manual_runs
+tag_attrs:
+  - ${data.dataset}
+  - ${model.arch}
+  - "use_hashtag=${model.use_hashtag}"
+  - "use_senti_tree=${model.use_senti_tree}"
+  - "hashtag_emb_dim=${model.hashtag_emb_dim}"
+  - "phrase_emb_dim=${model.phrase_emb_dim}"
+  - "phrase_num=${model.phrase_num}"
+
+api_key: ${oc.env:NEPTUNE_API_TOKEN} # api key is loaded from environment variable
+project_name: ${oc.env:NEPTUNE_NAME}
+offline: False

@@ -106,8 +106,8 @@ def log_epoch_losses(model_class, outputs, split):
 def log_epoch_metrics(model_class, outputs, split):
     logits = outputs['logits']
     targets = outputs['targets']
-    preds = calc_preds(logits)
-    get_step_metrics(preds, targets, model_class.perf_metrics)
+    # preds = calc_preds(logits)
+    get_step_metrics(logits, targets, model_class.perf_metrics)
     perf_metrics = get_epoch_metrics(model_class.perf_metrics)
 
     log_data_to_neptune(model_class, perf_metrics['acc'], 'acc', 'metric', 'epoch', split, ret_dict=None)

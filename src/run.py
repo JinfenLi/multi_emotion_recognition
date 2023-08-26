@@ -135,7 +135,6 @@ def build(cfg) -> Tuple[pl.LightningDataModule, pl.LightningModule, pl.Trainer]:
 
         os.makedirs(cfg.paths.save_dir, exist_ok=True)
         hydra_cfg = hydra.core.hydra_config.HydraConfig.get()
-
         # copy hydra configs
         shutil.copytree(
             os.path.join(hydra_cfg['runtime']['output_dir'], ".hydra"),

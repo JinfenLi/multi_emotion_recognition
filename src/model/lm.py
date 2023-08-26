@@ -222,8 +222,8 @@ class MultiEmoModel(BaseModel):
             input_ids = torch.cat(outputs['input_ids'])
             targets = torch.cat(outputs['targets'])
             logits = torch.cat(outputs['logits'])
-            out_data = calc_preds(logits)
-            probabilities = out_data.cpu().detach()
+            # out_data = calc_preds(logits)
+            probabilities = logits.cpu().detach()
             generate_output_file(self.dataset, self.tokenizer, input_ids, targets, probabilities, out_dir)
 
 

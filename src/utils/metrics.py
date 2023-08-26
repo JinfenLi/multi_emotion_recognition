@@ -25,7 +25,7 @@ def init_perf_metrics(num_classes):
     return perf_metrics
 
 def calc_preds(logits):
-    probabilities = F.softmax(logits, dim=1)
+    probabilities = logits.sigmoid()
     # binary_labels = (probabilities > .5).int()
     return probabilities
 

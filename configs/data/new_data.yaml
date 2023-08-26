@@ -1,6 +1,6 @@
 _target_: src.data.data.DataModule
 
-dataset: se_english
+dataset: new_data
 
 num_workers: ${setup.num_workers}
 data_path: "${paths.data_dir}/${.dataset}/${model.arch}/"

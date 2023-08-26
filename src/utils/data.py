@@ -20,9 +20,9 @@ dataset_info = {
 benchmark_datasets = ['se_english', 'se_arabic', 'se_spanish']
 
 monitor_dict = {
-    'se_english': 'dev_micro_f1_metric_epoch',
-    'se_arabic': 'dev_micro_f1_metric_epoch',
-    'se_spanish': 'dev_micro_f1_metric_epoch',
+    'se_english': 'dev_macro_f1_metric_epoch',
+    'se_arabic': 'dev_macro_f1_metric_epoch',
+    'se_spanish': 'dev_macro_f1_metric_epoch',
     # 'multirc': 'dev_macro_f1_metric_epoch',
     # 'fever': 'dev_macro_f1_metric_epoch',
     # 'sst': 'dev_acc_metric_epoch',

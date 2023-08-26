@@ -14,27 +14,28 @@ class BestPerformance(Callback):
         assert mode in ['max', 'min']
 
 
-    def on_validation_epoch_end(self, trainer: "pl.Trainer", pl_module: "pl.LightningModule") -> None:
-        if self.mode == 'max':
-            if pl_module.best_metrics['dev_best_perf'] == None:
-                assert pl_module.best_metrics['test_best_perf'] == None
-                pl_module.best_metrics['dev_best_perf'] = -float('inf')
-
-            if trainer.callback_metrics[self.monitor] > pl_module.best_metrics['dev_best_perf']:
-                pl_module.best_metrics['dev_best_perf'] = trainer.callback_metrics[self.monitor]
-                pl_module.best_metrics['test_best_perf'] = trainer.callback_metrics[self.test_monitor]
-                pl_module.best_metrics['best_epoch'] = trainer.current_epoch
-        else:
-            if pl_module.best_metrics['dev_best_perf'] == None:
-                assert pl_module.best_metrics['test_best_perf'] == None
-                pl_module.best_metrics['dev_best_perf'] = float('inf')
-
-            if trainer.callback_metrics[self.monitor] < pl_module.best_metrics['dev_best_perf']:
-                pl_module.best_metrics['dev_best_perf'] = trainer.callback_metrics[self.monitor]
-                pl_module.best_metrics['test_best_perf'] = trainer.callback_metrics[self.test_monitor]
-                pl_module.best_metrics['best_epoch'] = trainer.current_epoch
-
-        pl_module.log('dev_best_perf', pl_module.best_metrics['dev_best_perf'], prog_bar=True, sync_dist=True)
-        pl_module.log('test_best_perf', pl_module.best_metrics['test_best_perf'], prog_bar=True, sync_dist=True)
-        pl_module.log('best_epoch', pl_module.best_metrics['best_epoch'], prog_bar=True, sync_dist=True)
+    # def on_validation_epoch_end(self, trainer: "pl.Trainer", pl_module: "pl.LightningModule") -> None:
+    #     print("done 2")
+    #     if self.mode == 'max':
+    #         if pl_module.best_metrics['dev_best_perf'] == None:
+    #             assert pl_module.best_metrics['test_best_perf'] == None
+    #             pl_module.best_metrics['dev_best_perf'] = -float('inf')
+    #
+    #         if trainer.callback_metrics[self.monitor] > pl_module.best_metrics['dev_best_perf']:
+    #             pl_module.best_metrics['dev_best_perf'] = trainer.callback_metrics[self.monitor]
+    #             pl_module.best_metrics['test_best_perf'] = trainer.callback_metrics[self.test_monitor]
+    #             pl_module.best_metrics['best_epoch'] = trainer.current_epoch
+    #     else:
+    #         if pl_module.best_metrics['dev_best_perf'] == None:
+    #             assert pl_module.best_metrics['test_best_perf'] == None
+    #             pl_module.best_metrics['dev_best_perf'] = float('inf')
+    #
+    #         if trainer.callback_metrics[self.monitor] < pl_module.best_metrics['dev_best_perf']:
+    #             pl_module.best_metrics['dev_best_perf'] = trainer.callback_metrics[self.monitor]
+    #             pl_module.best_metrics['test_best_perf'] = trainer.callback_metrics[self.test_monitor]
+    #             pl_module.best_metrics['best_epoch'] = trainer.current_epoch
+    #
+    #     pl_module.log('dev_best_perf', pl_module.best_metrics['dev_best_perf'], prog_bar=True, sync_dist=True)
+    #     pl_module.log('test_best_perf', pl_module.best_metrics['test_best_perf'], prog_bar=True, sync_dist=True)
+    #     pl_module.log('best_epoch', pl_module.best_metrics['best_epoch'], prog_bar=True, sync_dist=True)
 

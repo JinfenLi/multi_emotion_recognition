@@ -36,3 +36,4 @@ setup(
 )
 
 
+import pytorch_lightning.trainer.trainer

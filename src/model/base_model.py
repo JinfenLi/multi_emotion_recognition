@@ -1,13 +1,17 @@
 from typing import Optional
 
 import pytorch_lightning as pl
-
+import torch
+from itertools import chain
 
 class BaseModel(pl.LightningModule):
     def __init__(self):
         super().__init__()
         # update in `setup`
         self.total_steps = None
+        self.training_step_outputs = []
+        self.validation_step_outputs = [[], []]
+        self.test_step_outputs = []
 
     def forward(self, **kwargs):
         raise NotImplementedError
@@ -24,6 +28,18 @@ class BaseModel(pl.LightningModule):
     def aggregate_epoch(self, outputs, split):
         raise NotImplementedError
 
+    def collater(self, outputs):
+        total_outputs = {
+            'loss': torch.stack([x['loss'] for x in outputs]),
+            'logits': torch.cat([x['logits'] for x in outputs]),
+            'targets': torch.cat([x['targets'] for x in outputs]),
+            'eval_split': [x['eval_split'] for x in outputs],
+            'input_ids': torch.cat([x['input_ids'] for x in outputs]),
+
+        }
+
+        return total_outputs
+
     def training_step(self, batch, batch_idx):
         # # freeze encoder for initial few epochs based on p.freeze_epochs
         # if self.current_epoch < self.freeze_epochs:
@@ -31,32 +47,71 @@ class BaseModel(pl.LightningModule):
         # else:
         # 	unfreeze_net(self.text_encoder)
         # print("training step")
-        return self.run_step(batch, 'train', batch_idx)
+        ret_dict = self.run_step(batch, 'train', batch_idx)
+        # loss = ret_dict['loss']
+        self.training_step_outputs.append(ret_dict)
+        return ret_dict
 
-    def training_epoch_end(self, outputs):
-        self.aggregate_epoch(outputs, 'train')
 
-    def validation_step(self, batch, batch_idx, dataset_idx):
+    def on_train_epoch_end(self):
+        training_step_outputs = self.collater(self.training_step_outputs)
+        self.aggregate_epoch(training_step_outputs, 'train')
+        self.training_step_outputs.clear()
+
+    def validation_step(self, batch, batch_idx, dataloader_idx=0):
         # print("validation_step step")
-        assert dataset_idx in [0, 1]
+        assert dataloader_idx in [0, 1]
         eval_splits = {0: 'dev', 1: 'test'}
-        return self.run_step(batch, eval_splits[dataset_idx], batch_idx)
+        ret_dict = self.run_step(batch, eval_splits[dataloader_idx], batch_idx)
+        self.validation_step_outputs[dataloader_idx].append(ret_dict)
+        return ret_dict
 
-    def validation_epoch_end(self, outputs):
-        self.aggregate_epoch(outputs, 'dev')
+    def on_validation_epoch_end(self):
+        print("done 1")
+        for dl_idx in range(len(self.validation_step_outputs)):
+            validation_step_outputs = self.collater(self.validation_step_outputs[dl_idx])
+            self.aggregate_epoch(validation_step_outputs, 'dev')
+            self.validation_step_outputs[dl_idx].clear()
+
+        monitor = self.trainer.callbacks[0].monitor
+        if self.trainer.callbacks[0].mode == 'max':
+            if self.best_metrics['dev_best_perf'] == None:
+                assert self.best_metrics['test_best_perf'] == None
+                self.best_metrics['dev_best_perf'] = -float('inf')
+
+            if self.trainer.callback_metrics[monitor] > self.best_metrics['dev_best_perf']:
+                self.best_metrics['dev_best_perf'] = self.trainer.callback_metrics[monitor]
+                self.best_metrics['test_best_perf'] = self.trainer.callback_metrics[monitor]
+                self.best_metrics['best_epoch'] = self.trainer.current_epoch
+        else:
+            if self.best_metrics['dev_best_perf'] == None:
+                assert self.best_metrics['test_best_perf'] == None
+                self.best_metrics['dev_best_perf'] = float('inf')
+
+            if self.trainer.callback_metrics[monitor] < self.best_metrics['dev_best_perf']:
+                self.best_metrics['dev_best_perf'] = self.trainer.callback_metrics[monitor]
+                self.best_metrics['test_best_perf'] = self.trainer.callback_metrics[monitor]
+                self.best_metrics['best_epoch'] = self.trainer.current_epoch
+
+        self.log('dev_best_perf', self.best_metrics['dev_best_perf'], prog_bar=True, sync_dist=True)
+        self.log('test_best_perf', self.best_metrics['test_best_perf'], prog_bar=True, sync_dist=True)
+        self.log('best_epoch', self.best_metrics['best_epoch'], prog_bar=True, sync_dist=True)
 
     def test_step(self, batch, batch_idx):
+        self.test_step_outputs.append(self.run_step(batch, 'test', batch_idx))
         return self.run_step(batch, 'test', batch_idx)
 
-    def test_epoch_end(self, outputs):
-        self.aggregate_epoch(outputs, 'test')
+    def on_test_epoch_end(self):
+        test_step_outputs = self.collater(self.test_step_outputs)
+        self.aggregate_epoch(test_step_outputs, 'test')
+        self.test_step_outputs.clear()
 
     def setup(self, stage: Optional[str] = None):
         """calculate total steps"""
         if stage == 'fit':
             # Get train dataloader
             train_loader = self.trainer.datamodule.train_dataloader()
-            ngpus = self.trainer.num_gpus
+            ngpus = self.trainer.num_devices
 
             # Calculate total steps
             eff_train_batch_size = (self.trainer.datamodule.train_batch_size *

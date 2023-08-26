@@ -168,7 +168,7 @@ class MultiEmoModel(BaseModel):
         logits = self.task_head(task_head_inputs)
         if self.use_emo_cor:
             logits = self.cor_head(logits, logits)
-
+        logits = logits.sigmoid()
         return logits
 
 
@@ -201,30 +201,30 @@ class MultiEmoModel(BaseModel):
         return ret_dict
 
     def aggregate_epoch(self, outputs, split):
-        if split == 'train':
-            splits = ['train']
-        elif split == 'dev':
-            splits = ['dev', 'test']
-        elif split == 'test':
-            splits = [outputs[0]['eval_split']]
-        outputs_list = outputs if split == 'dev' else [outputs]
+        # if split == 'train':
+        #     splits = ['train']
+        # elif split == 'dev':
+        #     splits = ['dev', 'test']
+        # elif split == 'test':
+        #     splits = [outputs[0]['eval_split']]
+        # outputs_list = outputs if split == 'dev' else [outputs]
 
-        for dataset_idx, eval_split in enumerate(splits):
-            outputs = outputs_list[dataset_idx]
-            log_epoch_losses(self, outputs, eval_split)  # Log epoch losses
-            log_epoch_metrics(self, outputs, eval_split)  # Log epoch metrics
+        # for dataset_idx, eval_split in enumerate(splits):
+        # outputs = outputs_list[dataset_idx]
+        log_epoch_losses(self, outputs, outputs['eval_split'][0])  # Log epoch losses
+        log_epoch_metrics(self, outputs, outputs['eval_split'][0])  # Log epoch metrics
 
         # Save outputs to file            
-        if self.save_outputs:
+        if self.save_outputs and split == 'test':
             out_dir = f'{get_original_cwd()}/save/{self.exp_id}/model_outputs/{self.dataset}'
             if not os.path.exists(out_dir):
                 os.makedirs(out_dir)
-            input_ids = torch.cat([x['input_ids'] for x in outputs])
-            targets = torch.cat([x['targets'] for x in outputs])
-            logits = torch.cat([x['logits'] for x in outputs])
+            input_ids = torch.cat(outputs['input_ids'])
+            targets = torch.cat(outputs['targets'])
+            logits = torch.cat(outputs['logits'])
             out_data = calc_preds(logits)
-            predictions = out_data.cpu().detach()
-            generate_output_file(self.dataset, self.tokenizer, input_ids, targets, predictions, out_dir)
+            probabilities = out_data.cpu().detach()
+            generate_output_file(self.dataset, self.tokenizer, input_ids, targets, probabilities, out_dir)
 
 
     def configure_optimizers(self):

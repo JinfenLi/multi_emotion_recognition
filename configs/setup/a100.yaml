@@ -3,4 +3,4 @@ eval_batch_size: 32
 accumulate_grad_batches: 1
 eff_train_batch_size: 32
 num_workers: 1
-precision: 16
+precision: 16-mixed

@@ -8,6 +8,7 @@ import time
 import uuid
 from typing import Tuple, Optional
 
+import hydra
 import torch
 import pytorch_lightning as pl
 import yaml
@@ -29,10 +30,10 @@ def get_callbacks(cfg: DictConfig):
     callbacks = [
         BestPerformance(monitor=monitor, mode=mode)
     ]
+    # callbacks = []
 
     if cfg.save_checkpoint:
-        callbacks.append(
-            ModelCheckpoint(
+        callbacks.append(ModelCheckpoint(
                 monitor=monitor,
                 dirpath=os.path.join(cfg.paths.save_dir, 'checkpoints'),
                 save_top_k=1,
@@ -42,6 +43,7 @@ def get_callbacks(cfg: DictConfig):
                 save_weights_only=True,
             )
         )
+
 
     if cfg.early_stopping:
         callbacks.append(
@@ -132,9 +134,11 @@ def build(cfg) -> Tuple[pl.LightningDataModule, pl.LightningModule, pl.Trainer]:
     if not cfg.training.evaluate_ckpt:
 
         os.makedirs(cfg.paths.save_dir, exist_ok=True)
+        hydra_cfg = hydra.core.hydra_config.HydraConfig.get()
+
         # copy hydra configs
         shutil.copytree(
-            os.path.join(os.getcwd(), ".hydra"),
+            os.path.join(hydra_cfg['runtime']['output_dir'], ".hydra"),
             os.path.join(cfg.paths.save_dir, "hydra")
         )
         logger.info(f"saving to {cfg.paths.save_dir}")
@@ -148,7 +152,7 @@ def build(cfg) -> Tuple[pl.LightningDataModule, pl.LightningModule, pl.Trainer]:
     trainer = instantiate(
         cfg.trainer,
         callbacks=get_callbacks(cfg),
-        checkpoint_callback=cfg.save_checkpoint,
+        # checkpoint_callback=cfg.save_checkpoint,
         logger=run_logger,
         _convert_="all",
     )
@@ -203,7 +207,7 @@ def run(cfg: DictConfig) -> Optional[float]:
             if split == 'train':
                 loader = dm.train_dataloader()
             elif split == 'dev':
-                loader = dm.val_dataloader(test=True)
+                loader = dm.val_dataloader(test=False)
             elif split == 'test':
                 loader = dm.test_dataloader()
 

@@ -100,23 +100,23 @@ def log_step_losses(model_class, loss_dict, ret_dict, split):
 
 
 def log_epoch_losses(model_class, outputs, split):
-    loss = torch.stack([x['loss'] for x in outputs]).mean()
+    loss = outputs['loss'].mean()
     log_data_to_neptune(model_class, loss, 'total', 'loss', 'epoch', split, ret_dict=None)
 
 def log_epoch_metrics(model_class, outputs, split):
-    logits = torch.cat([x['logits'] for x in outputs])
-    targets = torch.cat([x['targets'] for x in outputs])
+    logits = outputs['logits']
+    targets = outputs['targets']
     preds = calc_preds(logits)
     get_step_metrics(preds, targets, model_class.perf_metrics)
     perf_metrics = get_epoch_metrics(model_class.perf_metrics)
 
     log_data_to_neptune(model_class, perf_metrics['acc'], 'acc', 'metric', 'epoch', split, ret_dict=None)
     log_data_to_neptune(model_class, perf_metrics['macro_f1'], 'macro_f1', 'metric', 'epoch', split, ret_dict=None)
-    log_data_to_neptune(model_class, perf_metrics['micro_f1'], 'micro_f1', 'metric', 'epoch', split, ret_dict=None)
+    # log_data_to_neptune(model_class, perf_metrics['micro_f1'], 'micro_f1', 'metric', 'epoch', split, ret_dict=None)
     if model_class.num_classes == 2:
         log_data_to_neptune(model_class, perf_metrics['binary_f1'], 'binary_f1', 'metric', 'epoch', split, ret_dict=None)
 
 
-    if 'delta' in outputs[0].keys():
-        delta = torch.abs(torch.cat([x['delta'] for x in outputs])).mean()
+    if 'delta' in outputs.keys():
+        delta = torch.abs(outputs['delta']).mean()
         log_data_to_neptune(model_class, delta, 'convergence_delta', 'metric', 'epoch', split, ret_dict=None)

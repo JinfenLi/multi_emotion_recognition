@@ -2,7 +2,7 @@ from typing import Literal
 import torch
 import torchmetrics
 import torch.nn.functional as F
-
+from torchmetrics.classification import BinaryAccuracy, BinaryF1Score
 def init_best_metrics():
     return {
         'best_epoch': 0,
@@ -11,23 +11,23 @@ def init_best_metrics():
     }
 
 def init_perf_metrics(num_classes):
-    if num_classes > 2:
-        task: Literal["multiclass"] = "multiclass"
-    else:
-        task: Literal["binary"] = "binary"
+    # if num_classes > 2:
+    #     task: Literal["multiclass"] = "multiclass"
+    # else:
+    #     task: Literal["binary"] = "binary"
     perf_metrics = torch.nn.ModuleDict({
-        'acc': torchmetrics.Accuracy( num_classes=num_classes),
-        'macro_f1': torchmetrics.F1(num_classes=num_classes, average='macro', mdmc_average="global"),
-        'micro_f1': torchmetrics.F1(num_classes=num_classes, average='micro', mdmc_average="global"),
+        'acc': BinaryAccuracy(),
+        'macro_f1': BinaryF1Score(),
+        # 'micro_f1': BinaryF1Score(multidim_average='samplewise'),
     })
 
-    assert num_classes >= 2
+    # assert num_classes >= 2
     return perf_metrics
 
 def calc_preds(logits):
     probabilities = F.softmax(logits, dim=1)
-    binary_labels = (probabilities > .5).int()
-    return binary_labels
+    # binary_labels = (probabilities > .5).int()
+    return probabilities
 
 
 def get_step_metrics(preds, targets, metrics):

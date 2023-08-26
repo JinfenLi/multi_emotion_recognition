@@ -250,26 +250,54 @@ def update_dataset_dict(
 
 def main():
 
+    def transform_data(text, label, actual_max_length):
+
+        text = preprocess_dataset(text)
+        encode_dict = tokenizer(text, add_special_tokens=False, return_offsets_mapping=True)
+        raw_tokens = encode_dict.encodings[0].tokens
+        hashtag_inputs = get_hashtag_inputs(raw_tokens, hashtag_dict)
+        num_tokens = encode_dict['attention_mask'].count(1)
+        input_ids = encode_dict['input_ids']
+        offset_mapping = encode_dict['offset_mapping']
+        if num_tokens > actual_max_length:
+            actual_max_length = num_tokens
+
+        input_length = min(len(input_ids), max_length - num_special_tokens)
+        input_ids = input_ids[:input_length]
+        offset_mapping = offset_mapping[:input_length]
+        hashtag_inputs = hashtag_inputs[:input_length]
+
+        # truncated_text += tokenizer.convert_ids_to_tokens(token_id).strip("▁").strip("##")
+
+        update_dataset_dict(
+            idx, dataset_dict, input_ids, hashtag_inputs, max_length, actual_max_length, tokenizer, label,
+            text, offset_mapping)
+
+
     set_random_seed(args.seed)
 
     assert args.split is not None and args.arch is not None
     assert args.num_samples is None or args.num_samples >= 1
+    if args.dataset != 'new_data':
+        split, num_examples = dataset_info[args.dataset][args.split]
+        if args.num_samples is not None:
+            assert args.num_samples < num_examples
+            num_examples = args.num_samples
+        max_length = dataset_info[args.dataset]['max_length'][args.arch]
+        num_special_tokens = dataset_info[args.dataset]['num_special_tokens']
+    else:
+        max_length = 128
+        num_special_tokens = 2
 
-    split, num_examples = dataset_info[args.dataset][args.split]
-    if args.num_samples is not None:
-        assert args.num_samples < num_examples
-        num_examples = args.num_samples
-    max_length = dataset_info[args.dataset]['max_length'][args.arch]
-    num_special_tokens = dataset_info[args.dataset]['num_special_tokens']
     tokenizer = AutoTokenizer.from_pretrained(args.arch, strip_accents=False)
     data_path = os.path.join(args.data_dir, args.dataset, args.arch, args.split)
-    classes = dataset_info[args.dataset]['classes']
+
     if not os.path.exists(data_path):
         os.makedirs(data_path)
     dataset_dict = ddict(list)
     actual_max_length = 0
 
-    if args.dataset in ['se_english']:
+    if args.dataset in ['se_english', 'new_data']:
         hashtag_lexicon = nrc_hashtag_lexicon(args.resource_dir)
     elif args.dataset in ['se_spanish']:
         hashtag_lexicon = spanish_hashtag_lexicon(args.resource_dir)
@@ -288,32 +316,27 @@ def main():
         # datadict
         for idx in tqdm(range(0, num_examples), desc=f'Building {args.split} dataset'):
             text = f'{dataset[idx]["Tweet"]}'
-            text = preprocess_dataset(text)
-            encode_dict = tokenizer(text, add_special_tokens=False, return_offsets_mapping=True)
-            raw_tokens = encode_dict.encodings[0].tokens
-            hashtag_inputs = get_hashtag_inputs(raw_tokens, hashtag_dict)
-            num_tokens = encode_dict['attention_mask'].count(1)
-            input_ids = encode_dict['input_ids']
-            offset_mapping = encode_dict['offset_mapping']
-            if num_tokens > actual_max_length:
-                actual_max_length = num_tokens
-
-            input_length = min(len(input_ids), max_length - num_special_tokens)
-            input_ids = input_ids[:input_length]
-            offset_mapping = offset_mapping[:input_length]
-            hashtag_inputs = hashtag_inputs[:input_length]
-
-
-                # truncated_text += tokenizer.convert_ids_to_tokens(token_id).strip("▁").strip("##")
             label = [int(dataset[idx][x]) for x in dataset_info[args.dataset]['classes']]
-            update_dataset_dict(
-                idx, dataset_dict, input_ids, hashtag_inputs, max_length, actual_max_length, tokenizer, label,
-                text, offset_mapping)
+            transform_data(text, label, actual_max_length)
 
         dataset_dict['tree'] = sentiment_tree(dataset_dict['truncated_texts'],
                                            args.num_samples if args.num_samples else num_examples,
                                            dataset_dict['offsets'],
                                            max_length)
+
+    elif args.dataset == 'new_data':
+        df = pd.read_csv(os.path.join(args.data_dir, args.dataset, "new_data.csv"))
+        args.split = 'test'
+        num_examples = len(df) if args.num_samples is None else args.num_samples
+        for idx in tqdm(range(0, num_examples), desc=f'Building {args.split} dataset'):
+            text = f'{df["text"][idx]}'
+            label = f'{df["label"][idx]}'
+            transform_data(text, label, actual_max_length)
+        dataset_dict['tree'] = sentiment_tree(dataset_dict['truncated_texts'],
+                                             args.num_samples if args.num_samples else num_examples,
+                                             dataset_dict['offsets'],
+                                             max_length)
+
 
     if args.num_samples is not None and args.stratified_sampling:
         assert all([os.path.exists(os.path.join(data_path, f'{x}.pkl')) for x in ['item_idx', 'input_ids', 'hashtag_ids', 'attention_mask', 'tree', 'label']])
@@ -325,18 +348,15 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Dataset preprocessing')
     parser.add_argument('--data_dir', type=str, default='data/', help='Root directory for datasets')
     parser.add_argument('--resource_dir', type=str, default='resources/', help='Root directory for resources')
-    parser.add_argument('--dataset', type=str, default='se_english',
-                        choices=['se_english', 'se_arabic', 'se_spanish'])
+    parser.add_argument('--dataset', type=str, default='new_data',
+                        choices=['new_data', 'se_english', 'se_arabic', 'se_spanish'])
     parser.add_argument('--arch', type=str, default='bert-base-uncased',
                         choices=['google/bigbird-roberta-base', 'bert-base-uncased'])
     parser.add_argument('--split', type=str, default='train', help='Dataset split', choices=['train', 'dev', 'test'])
     parser.add_argument('--stratified_sampling', type=bool, default=False, help='Whether to use stratified sampling')
     parser.add_argument('--num_samples', type=int, default=None,
                         help='Number of examples to sample. None means all available examples are used.')
-
     parser.add_argument('--seed', type=int, default=0, help='Random seed')
     parser.add_argument('--use_srl', default=True, help='Use SRL features')
-    parser.add_argument('--func', default='main', help='Function to run')
     args = parser.parse_args()
-    if args.func == 'main':
-        main()
+    main()

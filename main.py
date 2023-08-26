@@ -8,7 +8,7 @@ import pyrootutils
 pyrootutils.setup_root(__file__, indicator=".project-root", pythonpath=True)
 
 
-@hydra.main(config_path="configs", config_name="config")
+@hydra.main(version_base="1.3", config_path="configs", config_name="config")
 def main(cfg: DictConfig):
     # import here for faster auto completion
     from src.utils.conf import touch

@@ -1,10 +1,10 @@
 from typing import Optional
 
-import pytorch_lightning as pl
+from lightning import LightningModule
 import torch
 from itertools import chain
 
-class BaseModel(pl.LightningModule):
+class BaseModel(LightningModule):
     def __init__(self):
         super().__init__()
         # update in `setup`
@@ -12,6 +12,9 @@ class BaseModel(pl.LightningModule):
         self.training_step_outputs = []
         self.validation_step_outputs = [[], []]
         self.test_step_outputs = []
+        self.predict_step_outputs = []
+        self.results = None
+
 
     def forward(self, **kwargs):
         raise NotImplementedError
@@ -30,9 +33,9 @@ class BaseModel(pl.LightningModule):
 
     def collater(self, outputs):
         total_outputs = {
-            'loss': torch.stack([x['loss'] for x in outputs]),
-            'logits': torch.cat([x['logits'] for x in outputs]),
-            'targets': torch.cat([x['targets'] for x in outputs]),
+            'loss': torch.stack([x['loss'] for x in outputs]) if 'loss' in outputs[0] else None,
+            'probs': torch.cat([x['probs'] for x in outputs]),
+            'targets': torch.cat([x['targets'] for x in outputs]) if outputs[0]['targets'] is not None else None,
             'eval_split': [x['eval_split'] for x in outputs],
             'input_ids': torch.cat([x['input_ids'] for x in outputs]),
 
@@ -67,13 +70,13 @@ class BaseModel(pl.LightningModule):
         return ret_dict
 
     def on_validation_epoch_end(self):
-        print("done 1")
         for dl_idx in range(len(self.validation_step_outputs)):
             validation_step_outputs = self.collater(self.validation_step_outputs[dl_idx])
             self.aggregate_epoch(validation_step_outputs, 'dev')
             self.validation_step_outputs[dl_idx].clear()
 
         monitor = self.trainer.callbacks[0].monitor
+        test_monitor = self.trainer.callbacks[0].test_monitor
         if self.trainer.callbacks[0].mode == 'max':
             if self.best_metrics['dev_best_perf'] == None:
                 assert self.best_metrics['test_best_perf'] == None
@@ -81,7 +84,7 @@ class BaseModel(pl.LightningModule):
 
             if self.trainer.callback_metrics[monitor] > self.best_metrics['dev_best_perf']:
                 self.best_metrics['dev_best_perf'] = self.trainer.callback_metrics[monitor]
-                self.best_metrics['test_best_perf'] = self.trainer.callback_metrics[monitor]
+                self.best_metrics['test_best_perf'] = self.trainer.callback_metrics[test_monitor]
                 self.best_metrics['best_epoch'] = self.trainer.current_epoch
         else:
             if self.best_metrics['dev_best_perf'] == None:
@@ -90,7 +93,7 @@ class BaseModel(pl.LightningModule):
 
             if self.trainer.callback_metrics[monitor] < self.best_metrics['dev_best_perf']:
                 self.best_metrics['dev_best_perf'] = self.trainer.callback_metrics[monitor]
-                self.best_metrics['test_best_perf'] = self.trainer.callback_metrics[monitor]
+                self.best_metrics['test_best_perf'] = self.trainer.callback_metrics[test_monitor]
                 self.best_metrics['best_epoch'] = self.trainer.current_epoch
 
         self.log('dev_best_perf', self.best_metrics['dev_best_perf'], prog_bar=True, sync_dist=True)
@@ -105,6 +108,19 @@ class BaseModel(pl.LightningModule):
         test_step_outputs = self.collater(self.test_step_outputs)
         self.aggregate_epoch(test_step_outputs, 'test')
         self.test_step_outputs.clear()
+        # self.results = results
+        # return results
+
+    def predict_step(self, batch, batch_idx, dataloader_idx=0):
+        self.predict_step_outputs.append(self.run_step(batch, 'pred', batch_idx))
+        return self.run_step(batch, 'pred', batch_idx)
+
+    def on_predict_epoch_end(self):
+        predict_step_outputs = self.collater(self.predict_step_outputs)
+        results = self.aggregate_epoch(predict_step_outputs, 'pred')
+        self.predict_step_outputs.clear()
+        self.results = results
+        return results
 
     def setup(self, stage: Optional[str] = None):
         """calculate total steps"""

@@ -16,6 +16,7 @@ num_train_seed: 0
 num_dev_seed: 0
 num_test_seed: 0
 
+num_classes: 11
 use_hashtag: ${model.use_hashtag}
 use_senti_tree: ${model.use_senti_tree}
 phrase_num: ${model.phrase_num}

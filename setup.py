@@ -27,13 +27,6 @@ setup(
     install_requires=["pytorch-lightning", "hydra-core"],
     package_dir={"": "src"},
     packages=find_packages(where="src"),
-    # use this to customize global commands available in the terminal after installing the package
-    entry_points={
-        "console_scripts": [
-            "command = main",
-        ]
-    },
+    # scripts=["src.predict_emotion:main"],
 )
 
-
-import pytorch_lightning.trainer.trainer

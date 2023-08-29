@@ -2,12 +2,13 @@ import os
 import getpass, logging, socket
 from typing import Any, List
 import torch
+from lightning_utilities.core.rank_zero import rank_zero_only
 from omegaconf.dictconfig import DictConfig
 from omegaconf.omegaconf import OmegaConf
-from pytorch_lightning.loggers import NeptuneLogger, CSVLogger
+from lightning.pytorch.loggers import NeptuneLogger, CSVLogger
 from src.utils.metrics import calc_preds, get_step_metrics, get_epoch_metrics
 from dotenv import load_dotenv
-
+import logging
 load_dotenv(override=True)
 
 # API_LIST = {
@@ -16,7 +17,7 @@ load_dotenv(override=True)
 #         'name': os.environ.get('NEPTUNE_NAME'),
 #     },
 # }
-
+log = logging.getLogger(__name__)
 
 def get_username():
     return getpass.getuser()
@@ -104,10 +105,10 @@ def log_epoch_losses(model_class, outputs, split):
     log_data_to_neptune(model_class, loss, 'total', 'loss', 'epoch', split, ret_dict=None)
 
 def log_epoch_metrics(model_class, outputs, split):
-    logits = outputs['logits']
+    probs = outputs['probs']
     targets = outputs['targets']
     # preds = calc_preds(logits)
-    get_step_metrics(logits, targets, model_class.perf_metrics)
+    get_step_metrics(probs, targets, model_class.perf_metrics)
     perf_metrics = get_epoch_metrics(model_class.perf_metrics)
 
     log_data_to_neptune(model_class, perf_metrics['acc'], 'acc', 'metric', 'epoch', split, ret_dict=None)
@@ -120,3 +121,47 @@ def log_epoch_metrics(model_class, outputs, split):
     if 'delta' in outputs.keys():
         delta = torch.abs(outputs['delta']).mean()
         log_data_to_neptune(model_class, delta, 'convergence_delta', 'metric', 'epoch', split, ret_dict=None)
+
+@rank_zero_only
+def log_hyperparameters(object_dict: dict) -> None:
+    """Controls which config parts are saved by lightning loggers.
+
+    Additionally saves:
+    - Number of model parameters
+    """
+
+    hparams = {}
+
+    cfg = object_dict["cfg"]
+    model = object_dict["model"]
+    trainer = object_dict["trainer"]
+
+    if not trainer.logger:
+        log.warning("Logger not found! Skipping hyperparameter logging...")
+        return
+
+    hparams["model"] = cfg["model"]
+
+    # save number of model parameters
+    hparams["model/params/total"] = sum(p.numel() for p in model.parameters())
+    hparams["model/params/trainable"] = sum(
+        p.numel() for p in model.parameters() if p.requires_grad
+    )
+    hparams["model/params/non_trainable"] = sum(
+        p.numel() for p in model.parameters() if not p.requires_grad
+    )
+
+    hparams["data"] = cfg["data"]
+    hparams["trainer"] = cfg["trainer"]
+
+    hparams["callbacks"] = cfg.get("callbacks")
+    hparams["extras"] = cfg.get("extras")
+
+    hparams["task_name"] = cfg.get("task_name")
+    hparams["tags"] = cfg.get("tags")
+    hparams["ckpt_path"] = cfg.get("ckpt_path")
+    hparams["seed"] = cfg.get("seed")
+
+    # send hparams to all loggers
+    for logger in trainer.loggers:
+        logger.log_hyperparams(hparams)

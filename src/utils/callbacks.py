@@ -1,6 +1,6 @@
-import pytorch_lightning as pl
-from pytorch_lightning.callbacks import Callback
-
+# import pytorch_lightning as pl
+# from pytorch_lightning.callbacks import Callback
+from lightning.pytorch import Callback
 class BestPerformance(Callback):
 
     def __init__(self, monitor, mode):

@@ -3,11 +3,11 @@ from transformers import get_scheduler
 no_decay = ['bias', 'LayerNorm.weight']
 
 
-def setup_optimizer_params(model_dict, optimizer, use_hashtag, use_senti_tree):
+def setup_optimizer_params(model_dict, optimizer, use_hashtag, use_senti_tree, use_emo_cor):
     optimizer_parameters = [
         {
             'params': [p for n, p in model_dict['task_encoder'].named_parameters() if not any(nd in n for nd in no_decay)],
-            'weight_decay': optimizer.weight_decay,
+            'weight_decay': optimizer.keywords['weight_decay'],
         },
         {
             'params': [p for n, p in model_dict['task_encoder'].named_parameters() if any(nd in n for nd in no_decay)],
@@ -15,7 +15,7 @@ def setup_optimizer_params(model_dict, optimizer, use_hashtag, use_senti_tree):
         },
         {
             'params': [p for n, p in model_dict['task_head'].named_parameters() if not any(nd in n for nd in no_decay)],
-            'weight_decay': optimizer.weight_decay,
+            'weight_decay': optimizer.keywords['weight_decay'],
         },
         {
             'params': [p for n, p in model_dict['task_head'].named_parameters() if any(nd in n for nd in no_decay)],
@@ -26,7 +26,7 @@ def setup_optimizer_params(model_dict, optimizer, use_hashtag, use_senti_tree):
         optimizer_parameters += [
             {
                 'params': [p for n, p in model_dict['hashtag_encoder'].named_parameters() if not any(nd in n for nd in no_decay)],
-                'weight_decay': optimizer.weight_decay,
+                'weight_decay': optimizer.keywords['weight_decay'],
             },
             {
                 'params': [p for n, p in model_dict['hashtag_encoder'].named_parameters() if any(nd in n for nd in no_decay)],
@@ -37,7 +37,7 @@ def setup_optimizer_params(model_dict, optimizer, use_hashtag, use_senti_tree):
         optimizer_parameters += [
             {
                 'params': [p for n, p in model_dict['phrase_encoder'].named_parameters() if not any(nd in n for nd in no_decay)],
-                'weight_decay': optimizer.weight_decay,
+                'weight_decay': optimizer.keywords['weight_decay'],
             },
             {
                 'params': [p for n, p in model_dict['phrase_encoder'].named_parameters() if any(nd in n for nd in no_decay)],
@@ -45,7 +45,7 @@ def setup_optimizer_params(model_dict, optimizer, use_hashtag, use_senti_tree):
             },
             {
                 'params': [p for n, p in model_dict['phrase_head'].named_parameters() if not any(nd in n for nd in no_decay)],
-                'weight_decay': optimizer.weight_decay,
+                'weight_decay': optimizer.keywords['weight_decay'],
             },
             {
                 'params': [p for n, p in model_dict['phrase_head'].named_parameters() if any(nd in n for nd in no_decay)],
@@ -54,10 +54,33 @@ def setup_optimizer_params(model_dict, optimizer, use_hashtag, use_senti_tree):
             {
                 'params': [p for n, p in model_dict['tok_attn'].named_parameters() if
                            not any(nd in n for nd in no_decay)],
-                'weight_decay': optimizer.weight_decay,
+                'weight_decay': optimizer.keywords['weight_decay'],
             },
             {
                 'params': [p for n, p in model_dict['tok_attn'].named_parameters() if
+                           any(nd in n for nd in no_decay)],
+                'weight_decay': 0.0,
+            },
+            {
+                'params': [p for n, p in model_dict['senti_encoder'].named_parameters() if
+                           not any(nd in n for nd in no_decay)],
+                'weight_decay': optimizer.keywords['weight_decay'],
+            },
+            {
+                'params': [p for n, p in model_dict['senti_encoder'].named_parameters() if
+                           any(nd in n for nd in no_decay)],
+                'weight_decay': 0.0,
+            }
+        ]
+    if use_emo_cor:
+        optimizer_parameters += [
+            {
+                'params': [p for n, p in model_dict['cor_head'].named_parameters() if
+                           not any(nd in n for nd in no_decay)],
+                'weight_decay': optimizer.keywords['weight_decay'],
+            },
+            {
+                'params': [p for n, p in model_dict['cor_head'].named_parameters() if
                            any(nd in n for nd in no_decay)],
                 'weight_decay': 0.0,
             },
@@ -66,11 +89,11 @@ def setup_optimizer_params(model_dict, optimizer, use_hashtag, use_senti_tree):
     return optimizer_parameters
 
 def setup_scheduler(scheduler, total_steps, optimizer):
-    if scheduler.warmup_updates > 1.0:
-        warmup_steps = int(scheduler.warmup_updates)
+    if scheduler['warmup_updates'] > 1.0:
+        warmup_steps = int(scheduler['warmup_updates'])
     else:
         warmup_steps = int(total_steps *
-                            scheduler.warmup_updates)
+                            scheduler['warmup_updates'])
     print(
         f'\nTotal steps: {total_steps} with warmup steps: {warmup_steps}\n')
 

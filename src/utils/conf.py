@@ -8,8 +8,7 @@ from pathlib import Path
 import rich.syntax
 import rich.tree
 from omegaconf import DictConfig, ListConfig, OmegaConf
-from pytorch_lightning.utilities import rank_zero_only
-
+from lightning.pytorch.utilities import rank_zero_only
 
 def fail_on_missing(cfg: DictConfig) -> None:
     if isinstance(cfg, ListConfig):

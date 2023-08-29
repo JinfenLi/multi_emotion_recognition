@@ -9,7 +9,7 @@ import numpy as np
 import pickle
 # import pickle5 as pickle
 from hydra.utils import get_original_cwd
-import pytorch_lightning as pl
+from lightning.pytorch import LightningDataModule
 import torch
 from torch.utils.data import DataLoader, Dataset
 from tqdm import tqdm
@@ -17,18 +17,23 @@ from torch.nn.utils.rnn import pad_sequence
 from src.utils.data import dataset_info, data_keys
 
 
-class DataModule(pl.LightningDataModule):
+class DataModule(LightningDataModule):
 
     def __init__(self,
-                 dataset: str, data_path: str, mode: str,
+                 use_hashtag: bool = False,
+                 use_senti_tree: bool = False, phrase_num: int = 0, dataset: str = None,
+                 data_path: str = None, mode: str = None, num_classes: int = None,
                  train_batch_size: int = 1, eval_batch_size: int = 1, eff_train_batch_size: int = 1, num_workers: int = 0,
                  num_train: int = None, num_dev: int = None, num_test: int = None,
                  num_train_seed: int = None, num_dev_seed: int = None, num_test_seed: int = None,
-                 train_shuffle: bool = False,
-                 use_hashtag: bool = False,
-                 use_senti_tree: bool = False, phrase_num: int = 0
+                 train_shuffle: bool = False
+
                  ):
         super().__init__()
+
+        self.use_hashtag = use_hashtag
+        self.use_senti_tree = use_senti_tree
+        self.phrase_num = phrase_num
 
         self.dataset = dataset
         self.data_path = data_path # ${data_dir}/${.dataset}/${model.arch}/
@@ -42,9 +47,7 @@ class DataModule(pl.LightningDataModule):
         self.num_samples_seed = {'train': num_train_seed, 'dev': num_dev_seed, 'test': num_test_seed}
 
         self.train_shuffle = train_shuffle
-        self.use_hashtag = use_hashtag
-        self.use_senti_tree = use_senti_tree
-        self.phrase_num = phrase_num
+
 
     def load_dataset(self, split):
         dataset = {}
@@ -62,12 +65,16 @@ class DataModule(pl.LightningDataModule):
 
         return dataset
 
-    def setup(self, splits=['all'], stage=None):
+    def setup(self, splits=['all'], stage=None, dataset=None):
         self.data = {}
-        splits = ['train', 'dev', 'test'] if splits == ['all'] else splits
-        for split in splits:
-            dataset = self.load_dataset(split)
-            self.data[split] = TextClassificationDataset(dataset, split, self.train_batch_size, self.use_hashtag, self.use_senti_tree, self.phrase_num)
+        if dataset is None:
+            splits = ['train', 'dev', 'test'] if splits == ['all'] else splits
+            for split in splits:
+                dataset = self.load_dataset(split)
+                self.data[split] = TextClassificationDataset(dataset, split, self.use_hashtag, self.use_senti_tree, self.phrase_num)
+        else:
+            self.data['pred'] = TextClassificationDataset(dataset, 'pred', self.use_hashtag, self.use_senti_tree, self.phrase_num)
+
 
     def train_dataloader(self):
 
@@ -110,12 +117,19 @@ class DataModule(pl.LightningDataModule):
             pin_memory=True
         )
 
+    def predict_dataloader(self):
+        return DataLoader(
+            self.data['pred'],
+            batch_size=self.eval_batch_size,
+            num_workers=self.num_workers,
+            collate_fn=self.data['pred'].collater,
+            pin_memory=True
+        )
 
 class TextClassificationDataset(Dataset):
-    def __init__(self, dataset, split, train_batch_size, use_hashtag, use_senti_tree, phrase_num):
+    def __init__(self, dataset, split, use_hashtag, use_senti_tree, phrase_num):
         self.data = dataset
         self.split = split
-        self.train_batch_size = train_batch_size
         self.use_hashtag = use_hashtag
         self.use_senti_tree = use_senti_tree
         self.phrase_num = phrase_num
@@ -127,12 +141,15 @@ class TextClassificationDataset(Dataset):
         item_idx = torch.LongTensor([self.data['item_idx'][idx]])
         input_ids = torch.LongTensor(self.data['input_ids'][idx])
         attention_mask = torch.LongTensor(self.data['attention_mask'][idx])
-        label = torch.LongTensor([self.data['label'][idx]])
+
         hashtag_ids = torch.LongTensor(self.data['hashtag_ids'][idx])
-        phrase_span_ids = torch.LongTensor(self.data['tree'][idx]['spans'])
-        sentiment_ids = torch.LongTensor(self.data['tree'][idx]['sentiment'])
+
+        result_tuple = (item_idx, input_ids, attention_mask, hashtag_ids)
+
 
         if self.use_senti_tree:
+            phrase_span_ids = torch.LongTensor(self.data['tree'][idx]['spans'])
+            sentiment_ids = torch.LongTensor(self.data['tree'][idx]['sentiment'])
             if phrase_span_ids.shape[0] == 0:
                 phrase_span_ids = torch.LongTensor([[0, 0]])
             if phrase_span_ids.shape[1] > self.phrase_num:
@@ -141,9 +158,12 @@ class TextClassificationDataset(Dataset):
             elif phrase_span_ids.shape[1] < self.phrase_num:
                 phrase_span_ids = torch.cat([phrase_span_ids, torch.LongTensor([[0, 0]] * (self.phrase_num - phrase_span_ids.shape[0]))])
                 sentiment_ids = torch.cat([sentiment_ids, torch.LongTensor([0] * (self.phrase_num - sentiment_ids.shape[0]))])
+            result_tuple += (phrase_span_ids, sentiment_ids)
 
-        return (
-            item_idx, input_ids, attention_mask, hashtag_ids, phrase_span_ids, sentiment_ids, label)
+        if 'label' in self.data:
+            label = torch.LongTensor([self.data['label'][idx]])
+            result_tuple += (label,)
+        return result_tuple
 
 
 
@@ -156,7 +176,7 @@ class TextClassificationDataset(Dataset):
             'hashtag_ids': torch.stack([x[3] for x in items], dim=0) if self.use_hashtag else None,
             'phrase_span_ids': torch.stack([x[4] for x in items]) if self.use_senti_tree else None,
             'sentiment_ids': torch.stack([x[5] for x in items]) if self.use_senti_tree else None,
-            'label': torch.cat([x[6] for x in items]),
+            'label': torch.cat([x[-1] for x in items]) if self.split != 'pred' else None,
             'split': self.split, # when evaluate_ckpt=true, split always equals to test
         }
         

@@ -7,6 +7,7 @@ defaults:
 
 arch: bert-base-uncased
 dataset: ${data.dataset}
+num_classes: ${data.num_classes}
 neg_weight: 1
 
 num_freeze_layers: 0
@@ -17,6 +18,7 @@ exp_id: null
 
 measure_attrs_runtime: False
 
+
 use_hashtag: False
 use_senti_tree: False
 use_emo_cor: False
@@ -25,3 +27,4 @@ hashtag_emb_dim: 80
 phrase_emb_dim: 80
 senti_emb_dim: 10
 phrase_num: 20
+max_length: 128

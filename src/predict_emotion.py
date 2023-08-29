@@ -83,16 +83,16 @@ def main(texts: list):
     """
     assert isinstance(texts, list), "texts must be a list of texts"
     config, hashtag_lexicon, ckpt_path = get_configuration()
-    max_length = config['model']['max_length']
-    arch = config['model']['arch']
-    use_hashtag = config['model']['use_hashtag']
-    use_senti_tree = config['model']['use_senti_tree']
-    phrase_num = config['model']['phrase_num']
-    use_emo_cor = config['model']['use_emo_cor']
-    hashtag_emb_dim = config['model']['hashtag_emb_dim']
-    phrase_emb_dim = config['model']['phrase_emb_dim']
-    senti_emb_dim = config['model']['senti_emb_dim']
-    num_classes = config['data']['num_classes']
+    max_length = config['max_length']
+    arch = config['arch']
+    use_hashtag = config['use_hashtag']
+    use_senti_tree = config['use_senti_tree']
+    phrase_num = config['phrase_num']
+    use_emo_cor = config['use_emo_cor']
+    hashtag_emb_dim = config['hashtag_emb_dim']
+    phrase_emb_dim = config['phrase_emb_dim']
+    senti_emb_dim = config['senti_emb_dim']
+    num_classes = config['num_classes']
 
     tokenizer = AutoTokenizer.from_pretrained(arch, strip_accents=False)
     hashtag_vocab = nrc_hashtag_lexicon(hashtag_lexicon)
@@ -111,5 +111,4 @@ def main(texts: list):
     trainer.predict(model=model, dataloaders=loader)
     test_results = trainer.lightning_module.results
     return test_results
-
 

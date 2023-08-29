@@ -159,6 +159,7 @@ configs/local/default.yaml
 
 #!save/
 /save/
+/src/tmp/
 /logs/
 #!save/best_model/checkpoints
 #!save/best_model/hydra

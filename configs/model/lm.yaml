@@ -1,7 +1,7 @@
 _target_: src.model.lm.MultiEmoModel
 
 defaults:
-  - optimizer: hf_adamw
+  - optimizer: adamw
   - scheduler: linear_with_warmup
 
 

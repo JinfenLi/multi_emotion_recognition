@@ -12,7 +12,7 @@ import emotlib
 import numpy as np
 from tqdm import tqdm
 
-from src.utils.data import dataset_info, data_keys
+from multi_emotion.utils.data import dataset_info, data_keys
 import pandas as pd
 
 def nrc_hashtag_lexicon(nrc_lexicon):
@@ -65,8 +65,6 @@ def update_dataset_dict(
     hashtag_inputs = [0] + hashtag_inputs + [0]
     num_tokens = len(input_ids)
     truncated_pos = token_offsets[-1][1] if text else 0
-    # if num_tokens > actual_max_length:
-    #     actual_max_length = num_tokens
 
     num_pad_tokens = max_length - num_tokens
     assert num_pad_tokens >= 0

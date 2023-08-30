@@ -27,9 +27,9 @@ from lightning.pytorch.callbacks import ModelCheckpoint, EarlyStopping
 from lightning.pytorch import Callback, LightningDataModule, LightningModule, Trainer
 from transformers import AutoTokenizer
 
-from src.utils.data import dataset_info, monitor_dict
-from src.utils.logging import get_logger, log_hyperparameters
-from src.utils.callbacks import BestPerformance
+from multi_emotion.utils.data import dataset_info, monitor_dict
+from multi_emotion.utils.logging import get_logger, log_hyperparameters
+from multi_emotion.utils.callbacks import BestPerformance
 
 def get_callbacks(cfg: DictConfig):
 
@@ -236,7 +236,7 @@ def run(cfg: DictConfig) -> Optional[float]:
 @hydra.main(version_base="1.3", config_path="configs", config_name="config")
 def main(cfg: DictConfig):
     # import here for faster auto completion
-    from src.utils.conf import touch
+    from multi_emotion.utils.conf import touch
 
     # additional set field by condition
     # assert no missing etc

@@ -1,20 +1,11 @@
 import os
-import types
 from pathlib import Path
-from typing import Optional
-from copy import deepcopy
-from itertools import chain
-
-import numpy as np
 import pickle
-# import pickle5 as pickle
-from hydra.utils import get_original_cwd
 from lightning.pytorch import LightningDataModule
 import torch
 from torch.utils.data import DataLoader, Dataset
 from tqdm import tqdm
-from torch.nn.utils.rnn import pad_sequence
-from src.utils.data import dataset_info, data_keys
+from multi_emotion.utils.data import data_keys
 
 
 class DataModule(LightningDataModule):
@@ -177,7 +168,7 @@ class TextClassificationDataset(Dataset):
             'phrase_span_ids': torch.stack([x[4] for x in items]) if self.use_senti_tree else None,
             'sentiment_ids': torch.stack([x[5] for x in items]) if self.use_senti_tree else None,
             'label': torch.cat([x[-1] for x in items]) if self.split != 'pred' else None,
-            'split': self.split, # when evaluate_ckpt=true, split always equals to test
+            'split': self.split,
         }
         
         return batch

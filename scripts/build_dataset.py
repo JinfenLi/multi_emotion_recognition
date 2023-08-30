@@ -22,7 +22,7 @@ from stanfordnlp.server import CoreNLPClient
 from dotenv import load_dotenv
 import os
 
-from src.utils.utils import preprocess_dataset, sample_dataset, save_datadict
+from multi_emotion.utils.utils import preprocess_dataset, sample_dataset, save_datadict
 
 load_dotenv(override=True)
 logging.basicConfig(level=logging.DEBUG, format='%(relativeCreated)6d %(threadName)s %(message)s')
@@ -30,9 +30,9 @@ logger = logging.getLogger(__name__)
 
 import pyrootutils
 pyrootutils.setup_root(__file__, indicator=".project-root", pythonpath=True)
-from src.utils.data import dataset_info, data_keys
-from src.utils.sentiTree.data_utils import get_CoreNLPClient, annotate_text, sentiment_tree
-from src.utils.utils import nrc_hashtag_lexicon, spanish_hashtag_lexicon, get_hashtag_inputs, update_dataset_dict, transform_data
+from multi_emotion.utils.data import dataset_info, data_keys
+from multi_emotion.utils.sentiTree.data_utils import get_CoreNLPClient, annotate_text, sentiment_tree
+from multi_emotion.utils.utils import nrc_hashtag_lexicon, spanish_hashtag_lexicon, get_hashtag_inputs, update_dataset_dict, transform_data
 
 os.environ["CORENLP_HOME"] = os.environ.get("CORENLP_HOME")
 

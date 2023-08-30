@@ -1,5 +1,4 @@
 English_Hashtag_Voc_Size = 32389 + 1
-# Arabic_Hashtag_Voc_Size = 100
 Spanish_Hashtag_Voc_Size = 2037 + 1
 
 dataset_info = {
@@ -23,14 +22,6 @@ monitor_dict = {
     'se_english': 'dev_macro_f1_metric_epoch',
     'se_arabic': 'dev_macro_f1_metric_epoch',
     'se_spanish': 'dev_macro_f1_metric_epoch',
-    # 'multirc': 'dev_macro_f1_metric_epoch',
-    # 'fever': 'dev_macro_f1_metric_epoch',
-    # 'sst': 'dev_acc_metric_epoch',
-    # 'amazon': 'dev_acc_metric_epoch',
-    # 'yelp': 'dev_acc_metric_epoch',
-    # 'stf': 'dev_binary_f1_metric_epoch',
-    # 'olid': 'dev_macro_f1_metric_epoch',
-    # 'irony': 'dev_binary_f1_metric_epoch',
 }
 
 data_keys = ['item_idx', 'input_ids', 'hashtag_ids', 'attention_mask', 'tree', 'label']

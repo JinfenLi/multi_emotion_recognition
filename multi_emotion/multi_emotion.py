@@ -13,10 +13,10 @@ from tqdm import tqdm
 from transformers import AutoTokenizer
 from collections import defaultdict as ddict
 
-from model.lm import MultiEmoModel
-from src.data.data import DataModule
-from utils.sentiTree.data_utils import sentiment_tree
-from utils.utils import nrc_hashtag_lexicon, preprocess_dataset, transform_data, update_dataset_dict
+from .model.lm import MultiEmoModel
+from .data.data import DataModule
+from .utils.sentiTree import data_utils
+from .utils.utils import nrc_hashtag_lexicon, preprocess_dataset, transform_data, update_dataset_dict
 
 logger = logging.getLogger(__name__)
 
@@ -56,7 +56,7 @@ def convert_text_to_features(texts, tokenizer, max_length, hashtag_dict, use_sen
         dataset_dict = update_dataset_dict(idx, dataset_dict, input_ids, hashtag_inputs, max_length, tokenizer, text, offset_mapping,
                                            label)
     if use_senti_tree:
-        dataset_dict['tree'] = sentiment_tree(dataset_dict['truncated_texts'],
+        dataset_dict['tree'] = data_utils.sentiment_tree(dataset_dict['truncated_texts'],
                                               len(texts),
                                               dataset_dict['offsets'],
                                               max_length)
@@ -68,17 +68,18 @@ def load_checkpoint(model, ckpt_path):
     torch.save(ckpt_path, buffer)
     buffer.seek(0)  # Reset the buffer position to the beginning
     checkpoint = torch.load(buffer)
-    model = model.load_from_checkpoint(checkpoint, strict=False)
+    model = model.load_from_checkpoint(checkpoint, strict=False, map_location=torch.device('cpu') if not torch.cuda.is_available() else None)
     logger.info(f"Loaded checkpoint for evaluation from {ckpt_path}")
     return model
 
-def main(texts: list):
+def predict(texts: list):
     """
 
     Args:
         texts: a list of texts
 
     Returns:
+        [{text: [text1, text2, ...], label: [emotion1, emotion2, ...], probability: [{anger: 0.1}, {anticipation: 0.2}, {...}]}]
 
     """
     assert isinstance(texts, list), "texts must be a list of texts"

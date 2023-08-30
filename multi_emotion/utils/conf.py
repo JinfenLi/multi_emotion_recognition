@@ -1,8 +1,6 @@
 """
 handle changes to the hydra config
 """
-import time
-import uuid
 from pathlib import Path
 
 import rich.syntax

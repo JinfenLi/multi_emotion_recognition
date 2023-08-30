@@ -1,4 +1,4 @@
-_target_: src.data.data.DataModule
+_target_: multi_emotion.data.data.DataModule
 
 dataset: se_english
 

@@ -5,12 +5,10 @@ from setuptools import find_packages, setup
 
 with open("README.md") as f:
     long_description = f.read()
-with open(os.path.join("src", "version.txt")) as f:
-    version = f.read().strip()
 
 setup(
-    name="multi_emotion_recognition",
-    version=version,
+    name="multi_emotion",
+    version='0.1.12',
 
     description="detect multiple emotions in a sentence including [anger, anticipation, disgust, fear, joy, love, optimism, pessimism, sadness,\
                     surprise, trust]",
@@ -21,12 +19,16 @@ setup(
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: Apache Software License",
+        'Programming Language :: Python :: 3.9'
     ],
     url="https://github.com/JinfenLi/multi_emotion_recognition",
     license="MIT",
-    install_requires=["pytorch-lightning", "hydra-core"],
-    package_dir={"": "src"},
-    packages=find_packages(where="src"),
-    # scripts=["src.predict_emotion:main"],
-)
+    install_requires=["lightning>=2","torch>=2",
+                      "emotlib",
+                      "numpy", "pandas", "rich", "torchmetrics>=1",
+                      "tqdm",
+                      "transformers==4.31.0"],
+    packages=find_packages(),
 
+
+)

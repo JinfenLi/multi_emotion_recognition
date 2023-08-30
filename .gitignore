@@ -161,6 +161,7 @@ configs/local/default.yaml
 /save/
 /src/tmp/
 /logs/
+/tmp
 #!save/best_model/checkpoints
 #!save/best_model/hydra
 #general_utils.py

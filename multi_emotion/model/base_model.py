@@ -1,8 +1,6 @@
 from typing import Optional
-
 from lightning import LightningModule
 import torch
-from itertools import chain
 
 class BaseModel(LightningModule):
     def __init__(self):

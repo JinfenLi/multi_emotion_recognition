@@ -1,4 +1,4 @@
-_target_: src.model.lm.MultiEmoModel
+_target_: multi_emotion.model.lm.MultiEmoModel
 
 defaults:
   - optimizer: adamw

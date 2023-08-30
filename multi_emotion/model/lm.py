@@ -1,20 +1,15 @@
 import torch
 from torch import nn
 
-# from hydra.utils import instantiate
-# from omegaconf import DictConfig
-
 from transformers import AutoModel, AutoTokenizer
-
-from src.model.base_model import BaseModel
-from src.model.attention import TokenAttention
-from src.utils.data import dataset_info, English_Hashtag_Voc_Size, Spanish_Hashtag_Voc_Size
-from src.utils.losses import calc_task_loss
-from src.utils.metrics import init_best_metrics, init_perf_metrics, calc_preds
-
-from src.utils.optim import setup_optimizer_params, setup_scheduler, freeze_layers
-from src.utils.logging import log_step_losses, log_epoch_losses, log_epoch_metrics
-from src.utils.utils import generate_output_file
+from multi_emotion.model.base_model import BaseModel
+from multi_emotion.model.attention import TokenAttention
+from multi_emotion.utils.data import English_Hashtag_Voc_Size, Spanish_Hashtag_Voc_Size
+from multi_emotion.utils.losses import calc_task_loss
+from multi_emotion.utils.metrics import init_best_metrics, init_perf_metrics
+from multi_emotion.utils.optim import setup_optimizer_params, setup_scheduler, freeze_layers
+from multi_emotion.utils.logging import log_step_losses, log_epoch_losses, log_epoch_metrics
+from multi_emotion.utils.utils import generate_output_file
 
 
 class MultiEmoModel(BaseModel):

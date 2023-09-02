@@ -23,7 +23,7 @@ If Multi-EmoBERT is helpful for your research, please consider citing our paper:
 ## Usage via Pip Package
 install pip package
 ```
-pip install multi-emotion
+pip install multi-emotion==0.1.12
 ```
 use pip package
 ```

@@ -30,7 +30,7 @@ use pip package
 from multi_emotion import multi_emotion
 multi_emotion.predict(["I am so happy today"])
 ```
-result preview
+preview result
 ```
 [{'text': 'i am so happy today', 'pred_label': 'joy,love,optimism', 'probability': '[{"anger": 0.00022063202050048858}, {"anticipation": 0.007108359131962061}, {"disgust": 0.0006860275752842426}, {"fear": 0.00044393239659257233}, {"joy": 0.9998739957809448}, {"love": 0.8244059085845947}, {"optimism": 0.931083083152771}, {"pessimism": 0.0002464792341925204}, {"sadness": 0.007342423778027296}, {"surprise": 0.001668739365413785}, {"trust": 0.009098367765545845}]'}]
 

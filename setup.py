@@ -8,7 +8,7 @@ with open("README.md") as f:
 
 setup(
     name="multi_emotion",
-    version='0.1.12',
+    version='0.1.13',
 
     description="detect multiple emotions in a sentence including [anger, anticipation, disgust, fear, joy, love, optimism, pessimism, sadness,\
                     surprise, trust]",

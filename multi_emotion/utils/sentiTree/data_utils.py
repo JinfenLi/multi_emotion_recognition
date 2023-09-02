@@ -2,6 +2,7 @@
     :author: Jinfen Li
     :url: https://github.com/JinfenLi
 """
+import re
 import socket
 import subprocess
 from collections import defaultdict as ddict

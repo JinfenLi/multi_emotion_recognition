@@ -18,22 +18,25 @@ from .data.data import DataModule
 from .utils.sentiTree import data_utils
 from .utils.utils import nrc_hashtag_lexicon, preprocess_dataset, transform_data, update_dataset_dict
 
+logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 def get_configuration():
-    os.makedirs('tmp', exist_ok=True)
-    if not os.path.exists('tmp/multi-emo-bert.tar.gz'):
-        logger.info("Downloading configuration files to ...")
+    path_to_exist = os.path.join(os.path.dirname(__file__), f"model_dependencies")
+    os.makedirs(path_to_exist, exist_ok=True)
+    if not os.path.exists(os.path.join(path_to_exist, "multi-emo-bert.tar.gz")):
+        logger.info(f"Downloading model configuration files to {path_to_exist} ...")
         torch.hub.download_url_to_file("https://pytorch-libs.s3.us-east-2.amazonaws.com/multi-emo-bert.tar.gz",
-                                       './tmp/multi-emo-bert.tar.gz')
-        with tarfile.open("tmp/multi-emo-bert.tar.gz", 'r:gz') as tar:
-            tar.extractall(path="tmp/")
-    with open(os.path.join("tmp/multi-emo-bert", 'config.yaml'), 'r') as f:
+                                       os.path.join(path_to_exist, "multi-emo-bert.tar.gz"))
+
+        with tarfile.open(os.path.join(path_to_exist, "multi-emo-bert.tar.gz"), 'r:gz') as tar:
+            tar.extractall(path=path_to_exist)
+    with open(os.path.join(path_to_exist, "multi-emo-bert", 'config.yaml'), 'r') as f:
         config = yaml.safe_load(f)
-    with open(os.path.join("tmp/multi-emo-bert", 'hashtag_lexicon.txt'), 'r') as f:
+    with open(os.path.join(path_to_exist, "multi-emo-bert", 'hashtag_lexicon.txt'), 'r') as f:
         hashtag_lexicon = f.readlines()
 
-    ckpt_path = os.path.join("tmp/multi-emo-bert", 'pytorch_model.ckpt')
+    ckpt_path = os.path.join(path_to_exist, "multi-emo-bert", 'pytorch_model.ckpt')
     return config, hashtag_lexicon, ckpt_path
 
 

@@ -65,13 +65,13 @@ def convert_text_to_features(texts, tokenizer, max_length, hashtag_dict, use_sen
                                               max_length)
     return dataset_dict
 
-def load_checkpoint(model, ckpt_path):
+def load_checkpoint(ckpt_path):
 
     buffer = io.BytesIO()
     torch.save(ckpt_path, buffer)
     buffer.seek(0)  # Reset the buffer position to the beginning
     checkpoint = torch.load(buffer)
-    model = model.load_from_checkpoint(checkpoint, strict=False, map_location=torch.device('cpu') if not torch.cuda.is_available() else None)
+    model = MultiEmoModel.load_from_checkpoint(checkpoint, strict=False, map_location=torch.device('cpu') if not torch.cuda.is_available() else None)
     logger.info(f"Loaded checkpoint for evaluation from {ckpt_path}")
     return model
 

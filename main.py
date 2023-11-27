@@ -1,3 +1,4 @@
+import importlib
 import os
 import time
 
@@ -68,6 +69,16 @@ def get_callbacks(cfg: DictConfig):
 
 
 logger = get_logger(__name__)
+
+def get_class_from_hydra(cfg):
+    # Split the target into module and class names
+    module_name, class_name = cfg._target_.rsplit(".", 1)
+
+    # Import the module
+    module = importlib.import_module(module_name)
+
+    # Get the class
+    return getattr(module, class_name)
 
 def restore_config_params(config: DictConfig, cfg: DictConfig):
     cfg.model.arch = config['model']['arch']
@@ -160,6 +171,7 @@ def build(cfg) -> Tuple[LightningDataModule, LightningModule, Trainer]:
         _convert_="all"
     )
     logger.info(f'load {cfg.model.arch} <{cfg.model._target_}>')
+    modelClass = get_class_from_hydra(cfg.model)
 
     trainer = instantiate(
         cfg.trainer,
@@ -177,13 +189,13 @@ def build(cfg) -> Tuple[LightningDataModule, LightningModule, Trainer]:
     }
     if run_logger:
         log_hyperparameters(object_dict)
-    return dm, model, trainer, config
+    return dm, model, trainer, config, modelClass
 
 
 
 def run(cfg: DictConfig) -> Optional[float]:
     L.seed_everything(cfg.seed)
-    dm, model, trainer, config = build(cfg)
+    dm, model, trainer, config, modelClass = build(cfg)
     L.seed_everything(cfg.seed)
     # from accelerate import Accelerator
     # accelerator = Accelerator()
@@ -216,7 +228,7 @@ def run(cfg: DictConfig) -> Optional[float]:
         torch.save(ckpt_path, buffer)
         buffer.seek(0)  # Reset the buffer position to the beginning
         checkpoint = torch.load(buffer)
-        model = model.load_from_checkpoint(checkpoint, strict=False)
+        model = modelClass.load_from_checkpoint(checkpoint, strict=False)
         logger.info(f"Loaded checkpoint for evaluation from {cfg.training.ckpt_path}")
         # model = restore_config_params(model, config, cfg)
         model.exp_id = cfg.training.exp_id

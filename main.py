@@ -1,7 +1,7 @@
 import importlib
 import os
 import time
-
+from multi_emotion.model import MultiEmoModel
 import hydra
 from omegaconf import DictConfig
 import pyrootutils
@@ -209,7 +209,7 @@ def run(cfg: DictConfig) -> Optional[float]:
         if cfg.training.finetune_ckpt:
             assert cfg.training.ckpt_path
             ckpt_path = os.path.join(cfg.paths.save_dir, "checkpoints", cfg.training.ckpt_path)
-            model = model.load_from_checkpoint(ckpt_path, strict=False)
+            model = MultiEmoModel.load_from_checkpoint(ckpt_path, strict=False)
             # model = restore_config_params(model, config, cfg)
             logger.info(f"Loaded checkpoint (for fine-tuning) from {ckpt_path}")
 
@@ -228,7 +228,7 @@ def run(cfg: DictConfig) -> Optional[float]:
         torch.save(ckpt_path, buffer)
         buffer.seek(0)  # Reset the buffer position to the beginning
         checkpoint = torch.load(buffer)
-        model = modelClass.load_from_checkpoint(checkpoint, strict=False)
+        model = MultiEmoModel.load_from_checkpoint(checkpoint, strict=False)
         logger.info(f"Loaded checkpoint for evaluation from {cfg.training.ckpt_path}")
         # model = restore_config_params(model, config, cfg)
         model.exp_id = cfg.training.exp_id

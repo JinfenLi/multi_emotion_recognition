@@ -8,7 +8,7 @@ with open("README.md") as f:
 
 setup(
     name="multi_emotion",
-    version='0.1.13',
+    version='0.1.15',
 
     description="detect multiple emotions in a sentence including [anger, anticipation, disgust, fear, joy, love, optimism, pessimism, sadness,\
                     surprise, trust]",
@@ -23,11 +23,9 @@ setup(
     ],
     url="https://github.com/JinfenLi/multi_emotion_recognition",
     license="MIT",
-    install_requires=["lightning>=2","torch>=2",
+    install_requires=["lightning>=2",
                       "emotlib",
-                      "numpy", "pandas", "rich", "torchmetrics>=1",
-                      "tqdm",
-                      "transformers==4.31.0"],
+                      "numpy", "pandas", "rich", "torchmetrics>=1"],
     packages=find_packages(),
 
 

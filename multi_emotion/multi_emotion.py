@@ -109,7 +109,7 @@ def predict(texts: list):
     model = MultiEmoModel(arch, use_hashtag, use_senti_tree, use_emo_cor,
                  hashtag_emb_dim,
                  phrase_emb_dim, senti_emb_dim, max_length, num_classes)
-    model = load_checkpoint(model, ckpt_path)
+    model = load_checkpoint(ckpt_path)
 
     trainer = Trainer(logger=False)
     trainer.predict(model=model, dataloaders=loader)
